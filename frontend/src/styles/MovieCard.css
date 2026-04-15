@@ -1,0 +1,212 @@
+.movie-card {
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.movie-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(102, 126, 234, 0.3);
+}
+
+/* ── Poster ── */
+.movie-poster-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background-color: #111;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.movie-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.movie-poster-wrap:hover .movie-poster {
+  transform: scale(1.04);
+}
+
+.movie-poster-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 0.85rem;
+  background-color: #111;
+}
+
+/* ── Score badge ── */
+.score-badge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 6px;
+  border-radius: 5px;
+  backdrop-filter: blur(6px);
+  z-index: 2;
+  line-height: 1.15;
+  min-width: 32px;
+}
+
+.score-badge.sb-green { background: rgba(0, 180, 80, 0.88); }
+.score-badge.sb-yellow { background: rgba(230, 160, 0, 0.88); }
+.score-badge.sb-red { background: rgba(200, 40, 40, 0.88); }
+
+.sb-num {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.sb-label {
+  font-size: 0.52rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Type badge (ANIME / TV) ── */
+.card-type-badge {
+  position: absolute;
+  bottom: 7px;
+  right: 7px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
+.card-type-badge.anime { background: rgba(224, 64, 251, 0.9); color: #fff; }
+.card-type-badge.tv { background: rgba(0, 188, 212, 0.9); color: #fff; }
+
+/* ── Legacy score badge (kept for compatibility) ── */
+.movie-score {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffd700;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  z-index: 1;
+}
+
+.poster-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.movie-poster-wrap:hover .poster-hover-overlay {
+  opacity: 1;
+}
+
+.watch-icon {
+  font-size: 2.5rem;
+  color: #fff;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+}
+
+/* ── Info ── */
+.movie-info {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.3rem;
+}
+
+.movie-title-link {
+  font-size: 0.92rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #f0f0f0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.movie-title-link:hover {
+  color: #a78bfa;
+}
+
+.movie-info .year {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.movie-info .overview {
+  color: #aaa;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  flex-grow: 1;
+}
+
+/* ── Card actions ── */
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.4rem;
+}
+
+.watch-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.watch-btn:hover {
+  opacity: 0.85;
+}
+
+.add-btn {
+  background: #1e1e3a;
+  border: 1px solid #3a3a6a;
+  color: #aaa;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.add-btn:hover {
+  border-color: #667eea;
+  color: #fff;
+}

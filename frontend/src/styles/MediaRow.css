@@ -1,0 +1,232 @@
+/* ── Media Row Container ── */
+.media-row {
+  margin-bottom: 2.5rem;
+}
+
+.mr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.mr-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.mr-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mr-badge--HOT { background: #e53935; color: #fff; }
+.mr-badge--TRENDING { background: linear-gradient(135deg, #ff9800, #e53935); color: #fff; }
+.mr-badge--NEW { background: #00c853; color: #fff; }
+.mr-badge--TOP { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #111; }
+.mr-badge--ANIME { background: linear-gradient(135deg, #e040fb, #7c4dff); color: #fff; }
+.mr-badge--TV { background: linear-gradient(135deg, #00bcd4, #0288d1); color: #fff; }
+
+.mr-controls {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.mr-scroll-btn {
+  background: #2a2a4a;
+  border: 1px solid #3a3a6a;
+  color: #aaa;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mr-scroll-btn:hover {
+  background: #667eea;
+  color: #fff;
+  border-color: #667eea;
+}
+
+/* ── Scrollable track ── */
+.mr-track {
+  display: flex;
+  gap: 0.85rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 0.75rem;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a6a transparent;
+}
+
+.mr-track::-webkit-scrollbar {
+  height: 4px;
+}
+.mr-track::-webkit-scrollbar-track {
+  background: transparent;
+}
+.mr-track::-webkit-scrollbar-thumb {
+  background: #3a3a6a;
+  border-radius: 2px;
+}
+
+/* ── Card ── */
+.mr-card {
+  flex: 0 0 148px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.mr-card:hover {
+  transform: translateY(-5px);
+}
+
+.mr-card-poster {
+  position: relative;
+  width: 148px;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #111;
+}
+
+.mr-card-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.mr-card:hover .mr-card-poster img {
+  transform: scale(1.05);
+}
+
+.mr-no-poster {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 0.8rem;
+  background: #1a1a2e;
+}
+
+/* ── Score badge ── */
+.row-score-badge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 6px;
+  border-radius: 5px;
+  backdrop-filter: blur(6px);
+  z-index: 2;
+  line-height: 1.1;
+}
+
+.row-score-badge.score-green { background: rgba(0, 180, 80, 0.88); }
+.row-score-badge.score-yellow { background: rgba(230, 160, 0, 0.88); }
+.row-score-badge.score-red { background: rgba(200, 40, 40, 0.88); }
+
+.rsb-num {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.rsb-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Type badge (ANIME / TV) ── */
+.mr-type-badge {
+  position: absolute;
+  bottom: 7px;
+  right: 7px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
+.mr-type-badge.anime { background: rgba(224, 64, 251, 0.9); color: #fff; }
+.mr-type-badge.tv { background: rgba(0, 188, 212, 0.9); color: #fff; }
+
+/* ── Hover overlay ── */
+.mr-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mr-card:hover .mr-hover-overlay {
+  opacity: 1;
+}
+
+.mr-play-icon {
+  font-size: 2.2rem;
+  color: #fff;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+}
+
+/* ── Card info ── */
+.mr-card-info {
+  padding: 0.4rem 0.1rem 0;
+}
+
+.mr-card-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.mr-card-year {
+  font-size: 0.75rem;
+  color: #777;
+  margin-top: 1px;
+}
+
+@media (max-width: 768px) {
+  .mr-card {
+    flex: 0 0 120px;
+  }
+  .mr-card-poster {
+    width: 120px;
+  }
+  .mr-title {
+    font-size: 1.1rem;
+  }
+}

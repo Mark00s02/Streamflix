@@ -1,0 +1,10 @@
+# .gitignore for root directory
+node_modules/
+.env
+.env.local
+*.log
+npm-debug.log*
+database.db
+.DS_Store
+dist/
+.vite/

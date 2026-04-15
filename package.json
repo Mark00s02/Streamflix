@@ -1,0 +1,34 @@
+{
+  "name": "streaming-platform",
+  "version": "1.0.0",
+  "description": "🎬 Free Movie Streaming Platform with user authentication and watchlists",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "install-all": "npm install && npm install --workspace=backend && npm install --workspace=frontend",
+    "dev": "concurrently --kill-others-on-fail -n backend,frontend -c blue,green \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "streaming",
+    "movies",
+    "react",
+    "node",
+    "express",
+    "sqlite"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/streaming-platform"
+  }
+}

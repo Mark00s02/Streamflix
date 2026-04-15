@@ -1,0 +1,218 @@
+/* ── Hero Banner ── */
+.hero-banner {
+  position: relative;
+  width: 100%;
+  min-height: 520px;
+  background: #111 center/cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+  margin: -2rem -2rem 2.5rem -2rem;
+  width: calc(100% + 4rem);
+}
+
+.hero-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(10, 10, 20, 0.98) 0%,
+    rgba(10, 10, 20, 0.85) 40%,
+    rgba(10, 10, 20, 0.3) 70%,
+    rgba(10, 10, 20, 0.1) 100%
+  ),
+  linear-gradient(
+    to top,
+    rgba(10, 10, 20, 0.9) 0%,
+    transparent 60%
+  );
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  padding: 3rem 3rem 3.5rem;
+  max-width: 680px;
+}
+
+.hero-badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.trending-badge {
+  background: linear-gradient(135deg, #ff9800, #e53935);
+  color: #fff;
+}
+
+.year-badge {
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.8);
+  backdrop-filter: blur(4px);
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+
+.hero-genres {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.hero-genre-pill {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 3px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.hero-overview {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+  max-width: 560px;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero-votes {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.82rem;
+}
+
+/* ── Score Ring ── */
+.score-ring {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 54px;
+}
+
+.score-ring svg {
+  display: block;
+}
+
+.score-ring.ring-green { color: #4caf50; }
+.score-ring.ring-yellow { color: #ffb300; }
+.score-ring.ring-red { color: #f44336; }
+
+.ring-text {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+}
+
+.ring-pct {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.ring-pct sup {
+  font-size: 0.55rem;
+  vertical-align: super;
+}
+
+.ring-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  margin-top: 1px;
+}
+
+/* ── Hero Actions ── */
+.hero-actions {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.hero-play-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.hero-play-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.hero-info-btn {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.25);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s;
+}
+
+.hero-info-btn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+@media (max-width: 768px) {
+  .hero-banner {
+    min-height: 420px;
+    margin: -2rem -2rem 2rem -2rem;
+  }
+
+  .hero-content {
+    padding: 2rem 1.5rem 2.5rem;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-overview {
+    font-size: 0.88rem;
+  }
+}
