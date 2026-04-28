@@ -1,0 +1,12 @@
+name = "streamflix"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "frontend/dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "streamflix-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Set these in Cloudflare Pages dashboard → Settings → Environment variables
+# TMDB_API_KEY = "your_tmdb_api_key"
+# JWT_SECRET   = "your_random_secret_string"
