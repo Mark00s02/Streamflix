@@ -5,7 +5,7 @@ pages_build_output_dir = "frontend/dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "streamflix-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "5a50b0a0-74f4-44c7-9f26-1bad5793140a"
 
 # Set these in Cloudflare Pages dashboard → Settings → Environment variables
 # TMDB_API_KEY = "your_tmdb_api_key"
