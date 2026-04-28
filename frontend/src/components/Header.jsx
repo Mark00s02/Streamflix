@@ -28,7 +28,9 @@ export default function Header() {
         <nav className={`nav ${menuOpen ? 'nav-open' : ''}`}>
           <Link to="/" className={isActive('/')} onClick={() => setMenuOpen(false)}>Home</Link>
           <Link to="/movies" className={isActive('/movies')} onClick={() => setMenuOpen(false)}>Movies</Link>
-          <Link to="/anime" className={`nav-anime ${isActive('/anime')}`} onClick={() => setMenuOpen(false)}>⛩ Anime</Link>
+          <Link to="/anime" className={`nav-anime ${isActive('/anime')}`} onClick={() => setMenuOpen(false)}>Anime</Link>
+          <Link to="/asiandrama" className={`nav-asiandrama ${isActive('/asiandrama')}`} onClick={() => setMenuOpen(false)}>Asian Drama</Link>
+          <Link to="/shortdramas" className={`nav-dramas ${isActive('/shortdramas')}`} onClick={() => setMenuOpen(false)}>Short Dramas</Link>
           <Link to="/search" className={isActive('/search')} onClick={() => setMenuOpen(false)}>Search</Link>
           {isAuthenticated && (
             <Link to="/watchlist" className={isActive('/watchlist')} onClick={() => setMenuOpen(false)}>Watchlist</Link>

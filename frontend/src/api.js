@@ -37,12 +37,28 @@ export const tvService = {
     api.get('/tv/discover', { params: { page, ...(genreId ? { genre: genreId } : {}) } }),
   getDetails: (id) => api.get(`/tv/${id}`),
   getSeason: (id, seasonNumber) => api.get(`/tv/${id}/season/${seasonNumber}`),
+  search: (query, page = 1) => api.get('/tv/search', { params: { q: query, page } }),
 };
 
 export const authService = {
   register: (username, email, password) =>
     api.post('/users/register', { username, email, password }),
   login: (email, password) => api.post('/users/login', { email, password }),
+};
+
+export const asianDramaService = {
+  browse:    (country = 'all', type = 'all', page = 1) =>
+    api.get('/asiandrama/browse', { params: { country, type, page } }),
+  trending:  (country)         => api.get(`/asiandrama/trending/${country}`),
+  trendingBL:(country = null)  => api.get('/asiandrama/trending/bl',  { params: country ? { country } : {} }),
+  trendingGL:(country = null)  => api.get('/asiandrama/trending/gl',  { params: country ? { country } : {} }),
+  search:    (query, page = 1) => api.get('/asiandrama/search', { params: { q: query, page } }),
+};
+
+export const dailymotionService = {
+  browse: (category = 'all', page = 1) => api.get('/dailymotion/browse', { params: { category, page } }),
+  search: (q, page = 1) => api.get('/dailymotion/search', { params: { q, page } }),
+  getVideo: (id) => api.get(`/dailymotion/video/${id}`),
 };
 
 export const watchlistService = {

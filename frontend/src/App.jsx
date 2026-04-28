@@ -7,6 +7,9 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Movies from './pages/Movies';
 import Anime from './pages/Anime';
+import AsianDrama from './pages/AsianDrama';
+import ShortDramas from './pages/ShortDramas';
+import ShortDramaWatch from './pages/ShortDramaWatch';
 import Search from './pages/Search';
 import Watch from './pages/Watch';
 import Watchlist from './pages/Watchlist';
@@ -28,6 +31,9 @@ function AppRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<Movies />} />
           <Route path="/anime" element={<Anime />} />
+          <Route path="/asiandrama" element={<AsianDrama />} />
+          <Route path="/shortdramas" element={<ShortDramas />} />
+          <Route path="/shortdramas/watch/:id" element={<ShortDramaWatch />} />
           <Route path="/search" element={<Search />} />
           <Route path="/watch/:id" element={<Watch />} />
           <Route

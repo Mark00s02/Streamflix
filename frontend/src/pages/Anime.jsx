@@ -30,6 +30,14 @@ export default function Anime() {
   const [browseLoading, setBrowseLoading] = useState(false);
   const [addingId, setAddingId] = useState(null);
 
+  // Search
+  const [searchInput, setSearchInput]     = useState('');
+  const [searchQuery, setSearchQuery]     = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTotal,   setSearchTotal]   = useState(null);
+  const [searchPage,    setSearchPage]    = useState(1);
+
   const { isAuthenticated } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
@@ -115,12 +123,53 @@ export default function Anime() {
     setPage(1);
   };
 
+  // ── Search ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!searchQuery) return;
+    runSearch(searchQuery, searchPage);
+  }, [searchQuery, searchPage]);
+
+  const runSearch = async (q, pg) => {
+    setSearchLoading(true);
+    try {
+      const res = await tvService.search(q, pg);
+      setSearchResults(res.data.results || []);
+      setSearchTotal(res.data.total_pages || null);
+    } catch {
+      addToast('Search failed', 'error');
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!searchInput.trim()) return;
+    setSearchQuery(searchInput.trim());
+    setSearchPage(1);
+  };
+
+  const clearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setSearchResults([]);
+    setSearchPage(1);
+  };
+
   const maxPage = totalPages ? Math.min(totalPages, 500) : 500;
+
+  // ── Banner backdrop (pick first popular anime with a backdrop) ──
+  const bannerItem = popular.find((item) => item.backdrop_path) || null;
+  const bannerStyle = bannerItem ? {
+    backgroundImage: `linear-gradient(135deg, rgba(45,27,107,0.92) 0%, rgba(74,14,120,0.82) 40%, rgba(26,10,58,0.88) 100%), url(https://image.tmdb.org/t/p/w1280${bannerItem.backdrop_path})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center top',
+  } : {};
 
   return (
     <div className="anime-page">
       {/* Page header */}
-      <div className="anime-header">
+      <div className="anime-header" style={bannerStyle}>
         <div className="anime-header-content">
           <div className="anime-title-group">
             <span className="anime-icon">⛩</span>
@@ -152,49 +201,95 @@ export default function Anime() {
 
       {/* Browse Section */}
       <div className="anime-browse">
-        <h2 className="anime-browse-title">Browse Anime</h2>
-
-        <div className="genre-pills">
-          {ANIME_GENRES.map((g) => (
-            <button
-              key={g.id ?? 'all'}
-              className={`genre-pill ${activeGenre === g.id ? 'active' : ''}`}
-              onClick={() => handleGenreChange(g.id)}
-            >
-              {g.name}
-            </button>
-          ))}
+        <div className="anime-search-bar">
+          <form onSubmit={handleSearchSubmit} className="anime-search-form">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search anime titles…"
+              className="anime-search-input"
+            />
+            <button type="submit" className="anime-search-btn">Search</button>
+            {searchQuery && (
+              <button type="button" className="anime-search-clear" onClick={clearSearch}>
+                ✕ Clear
+              </button>
+            )}
+          </form>
         </div>
 
-        {browseLoading ? (
-          <div className="loading-grid">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <div key={i} className="skeleton-card" />
-            ))}
-          </div>
+        {searchQuery ? (
+          <>
+            <p className="anime-search-label">Results for "<strong>{searchQuery}</strong>"</p>
+            {searchLoading ? (
+              <div className="loading-grid">
+                {Array.from({ length: 20 }).map((_, i) => <div key={i} className="skeleton-card" />)}
+              </div>
+            ) : (
+              <div className="movies-grid">
+                {searchResults.map((show) => (
+                  <MovieCard key={show.id} movie={show} mediaType="anime"
+                    onAddToWatchlist={() => handleAddToWatchlist(show)}
+                    showAddButton={addingId !== show.id} />
+                ))}
+                {searchResults.length === 0 && <p className="anime-empty">No results found.</p>}
+              </div>
+            )}
+            {searchResults.length > 0 && (
+              <div className="pagination">
+                <button onClick={() => setSearchPage((p) => Math.max(1, p - 1))} disabled={searchPage === 1 || searchLoading}>← Prev</button>
+                <span>Page {searchPage}{searchTotal ? ` of ${Math.min(searchTotal, 500)}` : ''}</span>
+                <button onClick={() => setSearchPage((p) => Math.min(searchTotal || 500, p + 1))} disabled={searchPage >= (searchTotal || 500) || searchLoading}>Next →</button>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="movies-grid">
-            {browseAnime.map((show) => (
-              <MovieCard
-                key={show.id}
-                movie={show}
-                mediaType="anime"
-                onAddToWatchlist={() => handleAddToWatchlist(show)}
-                showAddButton={addingId !== show.id}
-              />
-            ))}
-          </div>
-        )}
+          <>
+            <h2 className="anime-browse-title">Browse Anime</h2>
+            <div className="genre-pills">
+              {ANIME_GENRES.map((g) => (
+                <button
+                  key={g.id ?? 'all'}
+                  className={`genre-pill ${activeGenre === g.id ? 'active' : ''}`}
+                  onClick={() => handleGenreChange(g.id)}
+                >
+                  {g.name}
+                </button>
+              ))}
+            </div>
 
-        <div className="pagination">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || browseLoading}>
-            ← Prev
-          </button>
-          <span>Page {page}{totalPages ? ` of ${maxPage}` : ''}</span>
-          <button onClick={() => setPage((p) => Math.min(maxPage, p + 1))} disabled={page >= maxPage || browseLoading}>
-            Next →
-          </button>
-        </div>
+            {browseLoading ? (
+              <div className="loading-grid">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div key={i} className="skeleton-card" />
+                ))}
+              </div>
+            ) : (
+              <div className="movies-grid">
+                {browseAnime.map((show) => (
+                  <MovieCard
+                    key={show.id}
+                    movie={show}
+                    mediaType="anime"
+                    onAddToWatchlist={() => handleAddToWatchlist(show)}
+                    showAddButton={addingId !== show.id}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="pagination">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || browseLoading}>
+                ← Prev
+              </button>
+              <span>Page {page}{totalPages ? ` of ${maxPage}` : ''}</span>
+              <button onClick={() => setPage((p) => Math.min(maxPage, p + 1))} disabled={page >= maxPage || browseLoading}>
+                Next →
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

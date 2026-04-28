@@ -75,6 +75,66 @@
   opacity: 0.93;
 }
 
+/* ── Source timeout banner ── */
+.source-timeout-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: rgba(255, 160, 30, 0.08);
+  border: 1px solid rgba(255, 160, 30, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.stb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.stb-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.stb-msg {
+  color: rgba(255, 200, 100, 0.9);
+  flex: 1;
+  min-width: 0;
+}
+
+.stb-cycle-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.stb-cycle-btn:hover { opacity: 0.85; }
+
+.stb-dismiss {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.stb-dismiss:hover { color: rgba(255, 255, 255, 0.8); }
+
+
 /* ── Info section ── */
 .watch-info {
   display: flex;
@@ -460,10 +520,8 @@
 /* ── Source bar ── */
 .source-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.45rem;
   background: #12122a;
   border: 1px solid #1e1e3a;
   border-radius: 8px;
@@ -477,16 +535,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
   min-width: 0;
 }
 
 .source-bar-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* ── Ad Shield button ── */
@@ -525,7 +582,15 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.source-switcher::-webkit-scrollbar {
+  display: none;
 }
 
 .source-switcher-label {
@@ -562,6 +627,50 @@
   opacity: 0.75;
   margin-left: 2px;
 }
+
+/* ── Drama sites popup bar ── */
+.drama-popup-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: #0d0d1f;
+  border: 1px solid rgba(255, 110, 180, 0.18);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+}
+
+.drama-popup-label {
+  color: rgba(255, 200, 230, 0.6);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.drama-popup-btns {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.drama-popup-btn {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.28rem 0.75rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  border: none;
+}
+
+.drama-popup-btn:hover { opacity: 0.8; }
+
+.drama-popup-btn.dramacool { background: rgba(220,60,60,0.2);   color: #f99;  border: 1px solid rgba(220,60,60,0.35);   }
+.drama-popup-btn.kissasian { background: rgba(255,90,150,0.2);  color: #fbb;  border: 1px solid rgba(255,90,150,0.35);  }
+.drama-popup-btn.myasiantv { background: rgba(80,160,255,0.2);  color: #9cf;  border: 1px solid rgba(80,160,255,0.35);  }
+.drama-popup-btn.kshow123  { background: rgba(100,220,120,0.2); color: #9eb;  border: 1px solid rgba(100,220,120,0.35); }
 
 /* ── Seasons & Episodes section ── */
 .seasons-section {

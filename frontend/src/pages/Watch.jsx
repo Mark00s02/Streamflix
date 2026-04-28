@@ -7,11 +7,21 @@ import '../styles/Watch.css';
 
 // ── Embed sources ──────────────────────────────────────────────
 const SOURCES = [
-  { id: 'vidlink',    label: 'VidLink',    hint: 'Recommended' },
-  { id: 'vidsrc',     label: 'VidSrc',     hint: '' },
-  { id: 'autoembed',  label: 'AutoEmbed',  hint: '' },
-  { id: 'multiembed', label: 'MultiEmbed', hint: '' },
-  { id: 'moviesapi',  label: 'MoviesAPI',  hint: '' },
+  { id: 'vidlink',      label: 'VidLink',    hint: 'Recommended' },
+  { id: '2embed',       label: '2Embed',     hint: '' },
+  { id: 'autoembed',    label: 'AutoEmbed',  hint: '' },
+  { id: 'multiembed',   label: 'MultiEmbed', hint: '' },
+  { id: 'smashystream', label: 'Smashy',     hint: '' },
+  { id: 'moviesapi',    label: 'MoviesAPI',  hint: '' },
+  { id: 'vidsrc',       label: 'VidSrc',     hint: '' },
+];
+
+// Drama sites — these block iframe embedding so we open them as popup windows
+const DRAMA_SITES = [
+  { id: 'dramacool', label: 'DramaCool', url: (t) => `https://dramacool.com.pa/?s=${encodeURIComponent(t)}` },
+  { id: 'kissasian', label: 'KissAsian', url: (t) => `https://kissasian.sh/search?keyword=${encodeURIComponent(t)}` },
+  { id: 'myasiantv', label: 'MyAsianTV', url: (t) => `https://myasiantv.ac/search?keyword=${encodeURIComponent(t)}` },
+  { id: 'kshow123',  label: 'Kshow123',  url: (t) => `https://kshow123.mom/?s=${encodeURIComponent(t)}` },
 ];
 
 function getEmbedUrl(source, mediaType, id, season, episode) {
@@ -19,21 +29,25 @@ function getEmbedUrl(source, mediaType, id, season, episode) {
   const e = episode || 1;
   if (mediaType === 'movie') {
     switch (source) {
-      case 'vidlink':    return `https://vidlink.pro/movie/${id}`;
-      case 'vidsrc':     return `https://vidsrc.xyz/embed/movie/${id}`;
-      case 'autoembed':  return `https://player.autoembed.cc/embed/movie/${id}`;
-      case 'multiembed': return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
-      case 'moviesapi':  return `https://moviesapi.club/movie/${id}`;
-      default:           return `https://vidlink.pro/movie/${id}`;
+      case 'vidlink':      return `https://vidlink.pro/movie/${id}`;
+      case '2embed':       return `https://www.2embed.cc/embed/${id}`;
+      case 'autoembed':    return `https://player.autoembed.cc/embed/movie/${id}`;
+      case 'multiembed':   return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
+      case 'smashystream': return `https://player.smashy.stream/movie/${id}`;
+      case 'moviesapi':    return `https://moviesapi.club/movie/${id}`;
+      case 'vidsrc':       return `https://vidsrc.xyz/embed/movie/${id}`;
+      default:             return `https://vidlink.pro/movie/${id}`;
     }
   } else {
     switch (source) {
-      case 'vidlink':    return `https://vidlink.pro/tv/${id}/${s}/${e}`;
-      case 'vidsrc':     return `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`;
-      case 'autoembed':  return `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`;
-      case 'multiembed': return `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
-      case 'moviesapi':  return `https://moviesapi.club/tv/${id}-${s}-${e}`;
-      default:           return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+      case 'vidlink':      return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+      case '2embed':       return `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`;
+      case 'autoembed':    return `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`;
+      case 'multiembed':   return `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
+      case 'smashystream': return `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}`;
+      case 'moviesapi':    return `https://moviesapi.club/tv/${id}-${s}-${e}`;
+      case 'vidsrc':       return `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`;
+      default:             return `https://vidlink.pro/tv/${id}/${s}/${e}`;
     }
   }
 }
@@ -105,8 +119,10 @@ export default function Watch() {
   const [source,          setSource]          = useState('vidlink');
 
   // 'none' | 'css' | 'document'
-  const [pipMode,   setPipMode]   = useState('none');
-  const [adShield,  setAdShield]  = useState(true); // on by default
+  const [pipMode,       setPipMode]       = useState('none');
+  const [adShield,      setAdShield]      = useState(true);
+  const [sourceTimeout, setSourceTimeout] = useState(false);
+  const timeoutRef = useRef(null);
 
   const { isAuthenticated } = useAuth();
   const { addToast }        = useToast();
@@ -157,31 +173,65 @@ export default function Watch() {
   }, [onDragMove, onDragEnd]);
 
   // ── Ad Shield ────────────────────────────────────────────────
-  // Detects popup ads: clicking iframe controls normally doesn't hide the
-  // document, but an ad opening a new tab DOES (document.hidden → true).
-  // When that happens we immediately pull focus back.
+  // document.hasFocus() returns TRUE even when an iframe inside this page has
+  // focus (e.g. user clicks pause/seek in the player) — so we don't false-fire.
+  // It returns FALSE only when a completely separate window/tab steals focus,
+  // which is exactly what ad popups do (both new-tab AND popup-window ads).
   useEffect(() => {
     if (!playerReady || !adShield) return;
 
     let cooldown = false;
+    let lastBlurAt = 0;
+
+    const block = () => {
+      window.focus();
+      if (!cooldown) {
+        cooldown = true;
+        addToast('🛡 Ad popup blocked — pulled you back', 'warning');
+        setTimeout(() => { cooldown = false; }, 3000);
+      }
+    };
 
     const onBlur = () => {
-      // Small delay to let document.hidden settle after the tab switch
+      lastBlurAt = Date.now();
+      // Short delay lets the browser settle focus state
       setTimeout(() => {
-        if (!document.hidden) return; // normal iframe focus — ignore
-        // A new tab / popup stole focus → yank it back
-        window.focus();
-        if (!cooldown) {
-          cooldown = true;
-          addToast('🛡 Ad popup blocked — pulled you back', 'warning');
-          setTimeout(() => { cooldown = false; }, 4000);
-        }
-      }, 150);
+        if (document.hasFocus()) return; // iframe got focus inside our page — safe
+        block(); // focus truly left (popup window or new-window ad)
+      }, 80);
+    };
+
+    // Belt-and-suspenders: catches new-tab ads where visibility changes
+    // but only within 400 ms of a blur (to ignore deliberate tab switches)
+    const onVisibilityChange = () => {
+      if (document.hidden && Date.now() - lastBlurAt < 400) block();
     };
 
     window.addEventListener('blur', onBlur);
-    return () => window.removeEventListener('blur', onBlur);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('blur', onBlur);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [playerReady, adShield, addToast]);
+
+  // ── Source timeout detector ──────────────────────────────────
+  // If the player iframe has been showing for 10 s and the user hasn't
+  // manually switched, suggest cycling to the next source.
+  useEffect(() => {
+    setSourceTimeout(false);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (!playerReady) return;
+    timeoutRef.current = setTimeout(() => setSourceTimeout(true), 10000);
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+  }, [playerReady, source, selectedSeason, selectedEpisode]);
+
+  const cycleSource = useCallback(() => {
+    const idx  = SOURCES.findIndex((s) => s.id === source);
+    const next = SOURCES[(idx + 1) % SOURCES.length];
+    handleSourceChange(next.id);
+    setSourceTimeout(false);
+  }, [source]);
 
   // ── PiP enter / exit ─────────────────────────────────────────
   const enterPip = useCallback(async (currentEmbedUrl, currentLabel) => {
@@ -350,6 +400,19 @@ export default function Watch() {
   const handleSeasonChange  = (num) => { setSelectedSeason(num); setSelectedEpisode(1); };
   const handleSourceChange  = (src) => { setSource(src); if (!playerReady) setPlayerReady(true); };
 
+  const openDramaPopup = useCallback((site) => {
+    const mediaTitle = media?.title || media?.name;
+    if (!mediaTitle) return;
+    const url = site.url(mediaTitle);
+    const w = Math.min(1280, window.screen.availWidth  - 40);
+    const h = Math.min(860,  window.screen.availHeight - 60);
+    const l = Math.round((window.screen.availWidth  - w) / 2);
+    const t = Math.round((window.screen.availHeight - h) / 2);
+    window.open(url, `streamflix_drama_${site.id}`,
+      `width=${w},height=${h},left=${l},top=${t},resizable=yes,scrollbars=yes,` +
+      `status=no,toolbar=yes,menubar=no,location=yes`);
+  }, [media]);
+
   const handleAddToWatchlist = async () => {
     if (!isAuthenticated) { addToast('Sign in to save to your watchlist', 'info'); return; }
     try {
@@ -442,7 +505,7 @@ export default function Watch() {
                 className="player-iframe"
                 src={embedUrl}
                 allowFullScreen
-                allow="autoplay; fullscreen; picture-in-picture"
+                allow="autoplay; fullscreen; picture-in-picture; clipboard-write"
                 referrerPolicy="no-referrer"
                 title={nowPlaying}
               />
@@ -497,6 +560,34 @@ export default function Watch() {
           </div>
         </div>
       </div>
+
+      {/* ── Drama sites popup bar (TV only) ── */}
+      {mediaType === 'tv' && media && (
+        <div className="drama-popup-bar">
+          <span className="drama-popup-label">🌏 Not on any source? Open in popup window:</span>
+          <div className="drama-popup-btns">
+            {DRAMA_SITES.map((site) => (
+              <button key={site.id} className={`drama-popup-btn ${site.id}`} onClick={() => openDramaPopup(site)}>
+                {site.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Source timeout banner ── */}
+      {sourceTimeout && pipMode === 'none' && (
+        <div className="source-timeout-banner">
+          <div className="stb-row">
+            <span className="stb-icon">⚠</span>
+            <span className="stb-msg">This source doesn't have the title. Try another or use the links below.</span>
+            <button className="stb-cycle-btn" onClick={cycleSource}>
+              Try {SOURCES[(SOURCES.findIndex((s) => s.id === source) + 1) % SOURCES.length].label} →
+            </button>
+            <button className="stb-dismiss" onClick={() => setSourceTimeout(false)}>✕</button>
+          </div>
+        </div>
+      )}
 
       {/* ── Media info ── */}
       <div className="watch-info">

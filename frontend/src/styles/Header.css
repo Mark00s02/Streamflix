@@ -84,6 +84,38 @@
   border-color: rgba(224, 64, 251, 0.5);
 }
 
+.nav-asiandrama {
+  background: linear-gradient(135deg, rgba(255, 80, 160, 0.12), rgba(140, 60, 255, 0.12)) !important;
+  color: #ff9de2 !important;
+  border: 1px solid rgba(210, 100, 200, 0.2);
+}
+
+.nav-asiandrama:hover {
+  background: linear-gradient(135deg, rgba(255, 80, 160, 0.25), rgba(140, 60, 255, 0.25)) !important;
+  color: #ffb3e6 !important;
+}
+
+.nav-asiandrama.active {
+  background: linear-gradient(135deg, rgba(255, 80, 160, 0.3), rgba(140, 60, 255, 0.3)) !important;
+  border-color: rgba(210, 100, 200, 0.55);
+}
+
+.nav-dramas {
+  background: linear-gradient(135deg, rgba(255, 80, 120, 0.12), rgba(192, 0, 63, 0.12)) !important;
+  color: #ff8fa3 !important;
+  border: 1px solid rgba(255, 80, 120, 0.2);
+}
+
+.nav-dramas:hover {
+  background: linear-gradient(135deg, rgba(255, 80, 120, 0.25), rgba(192, 0, 63, 0.25)) !important;
+  color: #ffb3c1 !important;
+}
+
+.nav-dramas.active {
+  background: linear-gradient(135deg, rgba(255, 80, 120, 0.3), rgba(192, 0, 63, 0.3)) !important;
+  border-color: rgba(255, 80, 120, 0.5);
+}
+
 /* ── Auth section ── */
 .auth-section {
   display: flex;

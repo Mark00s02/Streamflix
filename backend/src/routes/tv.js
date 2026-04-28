@@ -94,6 +94,21 @@ router.get('/top-rated', async (req, res) => {
   }
 });
 
+// Search TV shows
+router.get('/search', async (req, res) => {
+  const { q, page = 1 } = req.query;
+  if (!q?.trim()) return res.status(400).json({ error: 'Query required' });
+  try {
+    const response = await axios.get(`${TMDB_BASE_URL}/search/tv`, {
+      params: { api_key: TMDB_API_KEY, query: q.trim(), page: parseInt(page) },
+    });
+    res.json({ results: response.data.results, total_pages: response.data.total_pages });
+  } catch (error) {
+    console.error('Error searching TV:', error.message);
+    res.status(500).json({ error: 'Failed to search TV' });
+  }
+});
+
 // Season details (episodes list)
 router.get('/:id/season/:seasonNumber', async (req, res) => {
   try {
