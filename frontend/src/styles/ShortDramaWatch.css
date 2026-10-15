@@ -171,3 +171,46 @@
 }
 
 .sdw-external { margin-top: 1.5rem; }
+
+/* Our own caption layer: readable size regardless of the video's height */
+.vp-caption {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 74px; /* above the native control bar */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  text-align: center;
+}
+
+.vp-caption span {
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: clamp(0.82rem, 2.1vh, 1.05rem);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.vp-cc {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.vp-cc.is-on { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Hide any native caption rendering that slips through */
+.vp-video::cue { color: transparent; background: transparent; }

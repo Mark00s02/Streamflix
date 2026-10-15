@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { watchlistService } from '../api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { BROWSE_CATEGORIES } from '../browseCategories';
 import MovieCard from '../components/MovieCard';
@@ -14,7 +13,6 @@ export default function SeeAll() {
   const { category } = useParams();
   const config = BROWSE_CATEGORIES[category];
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
   const { addToast } = useToast();
 
   const [items, setItems] = useState([]);
@@ -67,7 +65,6 @@ export default function SeeAll() {
   }, [loadNext, done, error]);
 
   const handleAdd = async (item) => {
-    if (!isAuthenticated) { addToast('Sign in to save to your watchlist', 'info'); navigate('/login'); return; }
     const type = config.mediaType === 'movie' ? 'movie' : 'tv';
     const title = item.title || item.name;
     try {

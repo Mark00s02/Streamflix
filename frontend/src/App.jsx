@@ -1,6 +1,5 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -13,17 +12,10 @@ import Search from './pages/Search';
 import Watch from './pages/Watch';
 import Watchlist from './pages/Watchlist';
 import SeeAll from './pages/SeeAll';
-import Login from './components/Login';
-import Register from './components/Register';
 import './styles/App.css';
 
 // The vertical player pulls in hls.js, so load it only when it's opened
 const ShortDramaWatch = lazy(() => import('./pages/ShortDramaWatch'));
-
-function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-}
 
 function AppRoutes() {
   return (
@@ -40,16 +32,10 @@ function AppRoutes() {
           <Route path="/browse/:category" element={<SeeAll />} />
           <Route path="/search" element={<Search />} />
           <Route path="/watch/:id" element={<Watch />} />
-          <Route
-            path="/watchlist"
-            element={
-              <ProtectedRoute>
-                <Watchlist />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/watchlist" element={<Watchlist />} />
+          {/* Accounts were removed; send old links home */}
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/register" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <Footer />
@@ -59,11 +45,9 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <AppRoutes />
-      </ToastProvider>
-    </AuthProvider>
+    <ToastProvider>
+      <AppRoutes />
+    </ToastProvider>
   );
 }
 

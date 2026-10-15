@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { asianDramaService, watchlistService } from '../api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import MediaRow from '../components/MediaRow';
 import MovieCard from '../components/MovieCard';
@@ -59,7 +58,6 @@ export default function AsianDrama() {
   const [searchTotal,   setSearchTotal]   = useState(null);
   const [searchPage,    setSearchPage]    = useState(1);
 
-  const { isAuthenticated } = useAuth();
   const { addToast }        = useToast();
   const navigate            = useNavigate();
 
@@ -140,7 +138,6 @@ export default function AsianDrama() {
   const maxPage   = totalPages ? Math.min(totalPages, 500) : 500;
 
   const handleAddToWatchlist = async (show) => {
-    if (!isAuthenticated) { addToast('Sign in to save to your watchlist', 'info'); navigate('/login'); return; }
     setAddingId(show.id);
     try {
       await watchlistService.addMovie(

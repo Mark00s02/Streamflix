@@ -27,7 +27,8 @@ const TYPE_PARAMS = {
 // ── Helpers ───────────────────────────────────────────────────
 const tmdbDiscover = (extra = {}) =>
   axios.get(`${TMDB_BASE_URL}/discover/tv`, {
-    params: { api_key: TMDB_API_KEY, sort_by: 'popularity.desc', ...extra },
+    // Live action only: anime belongs on the Anime page
+    params: { api_key: TMDB_API_KEY, sort_by: 'popularity.desc', without_genres: '16', ...extra },
   });
 
 // ── Browse — flexible filter endpoint ─────────────────────────
@@ -89,9 +90,12 @@ router.get('/search', async (req, res) => {
   if (!q?.trim()) return res.status(400).json({ error: 'Query required' });
   try {
     const r = await axios.get(`${TMDB_BASE_URL}/search/tv`, {
-      params: { api_key: TMDB_API_KEY, query: q.trim(), page: parseInt(page) },
+      params: { api_key: TMDB_API_KEY, query: q.trim(), page: parseInt(page), include_adult: true },
     });
-    res.json({ results: r.data.results, total_pages: r.data.total_pages });
+    // Only live-action series from the countries this page covers
+    const asian = ['KR', 'JP', 'CN', 'TW', 'HK', 'TH', 'VN', 'PH'];
+    const results = r.data.results.filter((t) => !t.genre_ids?.includes(16) && t.origin_country?.some((c) => asian.includes(c)));
+    res.json({ results, total_pages: r.data.total_pages });
   } catch (e) {
     console.error('Asian drama search error:', e.message);
     res.status(500).json({ error: 'Failed to search dramas' });

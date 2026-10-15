@@ -18,23 +18,51 @@ router.get('/trending', async (req, res) => {
   }
 });
 
-// Anime — Japanese animation (genre 16, language ja)
+// Anime — Japanese animation only, with adult titles (hentai, ecchi, erotic) left out
+const ANIME_ADULT_KEYWORDS = [198385, 384581, 195669, 325693, 256466];
+const isAnime = (t) => t.genre_ids?.includes(16) && t.original_language === 'ja' && !t.adult;
+
 router.get('/anime', async (req, res) => {
   const page = parseInt(req.query.page) || 1;
+  const { genre, sort = 'popular' } = req.query;
   try {
     const response = await axios.get(`${TMDB_BASE_URL}/discover/tv`, {
       params: {
         api_key: TMDB_API_KEY,
-        with_genres: 16,
+        with_genres: genre ? `16,${genre}` : 16,
         with_original_language: 'ja',
-        sort_by: 'popularity.desc',
+        include_adult: false,
+        without_keywords: ANIME_ADULT_KEYWORDS.join('|'),
+        sort_by: sort === 'top' ? 'vote_average.desc' : 'popularity.desc',
+        ...(sort === 'top' ? { 'vote_count.gte': 300 } : {}),
         page,
       },
     });
-    res.json({ results: response.data.results, total_pages: response.data.total_pages });
+    res.json({ results: response.data.results.filter((t) => !t.adult), total_pages: response.data.total_pages });
   } catch (error) {
     console.error('Error fetching anime:', error);
     res.status(500).json({ error: 'Failed to fetch anime' });
+  }
+});
+
+// Search can't exclude keywords, so check each anime hit's keywords
+router.get('/anime/search', async (req, res) => {
+  const { q, page = 1 } = req.query;
+  if (!q?.trim()) return res.status(400).json({ error: 'Query required' });
+  try {
+    const r = await axios.get(`${TMDB_BASE_URL}/search/tv`, {
+      params: { api_key: TMDB_API_KEY, query: q.trim(), page: parseInt(page), include_adult: false },
+    });
+    const checked = await Promise.all(r.data.results.filter(isAnime).map(async (t) => {
+      try {
+        const kw = await axios.get(`${TMDB_BASE_URL}/tv/${t.id}/keywords`, { params: { api_key: TMDB_API_KEY } });
+        return kw.data.results?.some((k) => ANIME_ADULT_KEYWORDS.includes(k.id)) ? null : t;
+      } catch { return t; }
+    }));
+    res.json({ results: checked.filter(Boolean), total_pages: r.data.total_pages });
+  } catch (error) {
+    console.error('Error searching anime:', error.message);
+    res.status(500).json({ error: 'Failed to search anime' });
   }
 });
 

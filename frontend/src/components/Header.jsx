@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import Icon, { LogoMark } from './Icon';
 import '../styles/Header.css';
 
@@ -10,14 +9,36 @@ const NAV = [
   { to: '/anime',       label: 'Anime' },
   { to: '/asiandrama',  label: 'Asian drama' },
   { to: '/shortdramas', label: 'Short dramas' },
+  { to: '/watchlist',   label: 'Watchlist' },
 ];
 
+// The search box searches whichever section you're in
+export function searchScopeFor(pathname, search = '') {
+  if (pathname.startsWith('/search')) return new URLSearchParams(search).get('scope') || 'all';
+  if (pathname.startsWith('/anime') || pathname === '/browse/anime' || pathname === '/browse/top-rated-anime') return 'anime';
+  if (pathname.startsWith('/asiandrama') || /^\/browse\/(k|j|c|tw|thai|pinoy|vn)drama|^\/browse\/(bl|gl)$/.test(pathname)) return 'drama';
+  if (pathname.startsWith('/shortdramas')) return 'short';
+  if (pathname.startsWith('/movies')) return 'movies';
+  return 'all';
+}
+
+const PLACEHOLDER = {
+  all: 'Search movies and series',
+  movies: 'Search movies',
+  anime: 'Search anime',
+  drama: 'Search Asian dramas',
+  short: 'Search short dramas',
+};
+
 export default function Header() {
-  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [term, setTerm] = useState('');
+  const inputRef = useRef(null);
+  const scope = searchScopeFor(location.pathname, location.search);
 
   // Transparent over the hero, glass once the page scrolls
   useEffect(() => {
@@ -27,19 +48,29 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close the mobile menu and return to the top on navigation
+  // Close menus and return to the top on navigation
   useEffect(() => {
     setMenuOpen(false);
+    setSearchOpen(false);
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  useEffect(() => {
+    if (searchOpen) inputRef.current?.focus();
+  }, [searchOpen]);
+
+  const submitSearch = (e) => {
+    e.preventDefault();
+    const q = term.trim();
+    if (!q) return;
+    if (scope === 'short') navigate(`/shortdramas?q=${encodeURIComponent(q)}`);
+    else navigate(`/search?scope=${scope}&q=${encodeURIComponent(q)}`);
+    setSearchOpen(false);
+    setTerm('');
   };
 
   return (
-    <header className={`site-header ${scrolled || menuOpen ? 'is-solid' : ''}`}>
+    <header className={`site-header ${scrolled || menuOpen || searchOpen ? 'is-solid' : ''}`}>
       <div className="header-container">
         <Link to="/" className="logo" aria-label="StreamFlix home">
           <LogoMark size={30} />
@@ -52,43 +83,28 @@ export default function Header() {
               {n.label}
             </NavLink>
           ))}
-          {isAuthenticated && (
-            <NavLink to="/watchlist" className={({ isActive }) => (isActive ? 'active' : '')}>Watchlist</NavLink>
-          )}
-          <div className="nav-auth-mobile">
-            {isAuthenticated ? (
-              <button onClick={handleLogout} className="btn btn-ghost"><Icon name="logout" /> Sign out</button>
-            ) : (
-              <>
-                <Link to="/login" className="btn btn-ghost">Sign in</Link>
-                <Link to="/register" className="btn btn-primary">Create account</Link>
-              </>
-            )}
-          </div>
         </nav>
 
         <div className="header-actions">
-          <Link to="/search" className="icon-btn" aria-label="Search">
-            <Icon name="search" size={20} />
-          </Link>
-          <div className="auth-section">
-            {isAuthenticated ? (
-              <div className="user-menu">
-                <span className="user-chip" title={user?.email}>
-                  <span className="user-avatar">{(user?.username || '?').charAt(0).toUpperCase()}</span>
-                  <span className="username">{user?.username}</span>
-                </span>
-                <button onClick={handleLogout} className="icon-btn" aria-label="Sign out" title="Sign out">
-                  <Icon name="logout" size={19} />
-                </button>
-              </div>
-            ) : (
-              <>
-                <Link to="/login" className="btn btn-quiet">Sign in</Link>
-                <Link to="/register" className="btn btn-primary">Create account</Link>
-              </>
-            )}
-          </div>
+          <form className={`header-search ${searchOpen ? 'is-open' : ''}`} onSubmit={submitSearch} role="search">
+            <input
+              ref={inputRef}
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Escape') setSearchOpen(false); }}
+              placeholder={PLACEHOLDER[scope]}
+              aria-label={PLACEHOLDER[scope]}
+              tabIndex={searchOpen ? 0 : -1}
+            />
+            <button
+              type={searchOpen && term.trim() ? 'submit' : 'button'}
+              className="icon-btn"
+              onClick={() => { if (!searchOpen) setSearchOpen(true); else if (!term.trim()) setSearchOpen(false); }}
+              aria-label={searchOpen ? 'Search' : 'Open search'}
+            >
+              <Icon name={searchOpen && !term.trim() ? 'close' : 'search'} size={20} />
+            </button>
+          </form>
           <button
             className="icon-btn hamburger"
             onClick={() => setMenuOpen((o) => !o)}

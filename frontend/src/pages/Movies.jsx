@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { movieService, watchlistService } from '../api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import MovieCard from '../components/MovieCard';
 import '../styles/Movies.css';
@@ -25,7 +24,6 @@ export default function Movies() {
   const [genreLoading, setGenreLoading] = useState(true);
   const [addingId, setAddingId] = useState(null);
 
-  const { isAuthenticated } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -71,11 +69,6 @@ export default function Movies() {
   };
 
   const handleAddToWatchlist = async (movie) => {
-    if (!isAuthenticated) {
-      addToast('Sign in to save movies to your watchlist', 'info');
-      navigate('/login');
-      return;
-    }
     setAddingId(movie.id);
     try {
       await watchlistService.addMovie(

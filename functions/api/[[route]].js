@@ -111,12 +111,37 @@ app.get('/tv/trending', async (c) => {
   return c.json(data.results)
 })
 
+// Anime: Japanese animation only, with adult titles (hentai, ecchi, erotic) left out
+const ANIME_ADULT_KEYWORDS = [198385, 384581, 195669, 325693, 256466]
+const isAnime = (t) => t.genre_ids?.includes(16) && t.original_language === 'ja' && !t.adult
+
 app.get('/tv/anime', async (c) => {
-  const page = c.req.query('page') || 1
+  const { page = 1, genre, sort = 'popular' } = c.req.query()
   const data = await tmdb('/discover/tv', c.env, {
-    with_genres: 16, with_original_language: 'ja', sort_by: 'popularity.desc', page,
+    with_genres: genre ? `16,${genre}` : 16,
+    with_original_language: 'ja',
+    include_adult: false,
+    without_keywords: ANIME_ADULT_KEYWORDS.join('|'),
+    sort_by: sort === 'top' ? 'vote_average.desc' : 'popularity.desc',
+    'vote_count.gte': sort === 'top' ? 300 : undefined,
+    page,
   })
-  return c.json({ results: data.results, total_pages: data.total_pages })
+  return c.json({ results: data.results.filter((t) => !t.adult), total_pages: data.total_pages })
+})
+
+// Search can't exclude keywords, so check each anime hit's keywords
+app.get('/tv/anime/search', async (c) => {
+  const { q, page = 1 } = c.req.query()
+  if (!q?.trim()) return c.json({ error: 'Query required' }, 400)
+  const data = await tmdb('/search/tv', c.env, { query: q.trim(), page, include_adult: false })
+  const anime = data.results.filter(isAnime)
+  const checked = await Promise.all(anime.map(async (t) => {
+    try {
+      const kw = await tmdb(`/tv/${t.id}/keywords`, c.env)
+      return kw.results?.some((k) => ANIME_ADULT_KEYWORDS.includes(k.id)) ? null : t
+    } catch { return t }
+  }))
+  return c.json({ results: checked.filter(Boolean), total_pages: data.total_pages })
 })
 
 app.get('/tv/popular', async (c) => {
@@ -185,7 +210,7 @@ app.get('/asiandrama/browse', async (c) => {
   const countryExtra = country !== 'all' ? (COUNTRY_PARAMS[country] || {}) : {}
   const typeExtra    = type    !== 'all' ? (TYPE_PARAMS[type]    || {}) : {}
   const fallback     = country !== 'all' && type === 'all' ? { with_genres: '18' } : {}
-  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', page, ...countryExtra, ...typeExtra, ...fallback })
+  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', without_genres: '16', page, ...countryExtra, ...typeExtra, ...fallback })
   return c.json({ results: data.results, total_pages: data.total_pages })
 })
 
@@ -193,29 +218,33 @@ app.get('/asiandrama/browse', async (c) => {
 app.get('/asiandrama/trending/bl', async (c) => {
   const countryKey = c.req.query('country')
   const extra = countryKey ? (COUNTRY_PARAMS[countryKey] || {}) : {}
-  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...TYPE_PARAMS.bl, page: c.req.query('page') || 1, ...extra })
+  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', without_genres: '16', ...TYPE_PARAMS.bl, page: c.req.query('page') || 1, ...extra })
   return c.json(data.results.slice(0, 20))
 })
 
 app.get('/asiandrama/trending/gl', async (c) => {
   const countryKey = c.req.query('country')
   const extra = countryKey ? (COUNTRY_PARAMS[countryKey] || {}) : {}
-  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...TYPE_PARAMS.gl, page: c.req.query('page') || 1, ...extra })
+  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', without_genres: '16', ...TYPE_PARAMS.gl, page: c.req.query('page') || 1, ...extra })
   return c.json(data.results.slice(0, 20))
 })
 
 app.get('/asiandrama/trending/:country', async (c) => {
   const cp = COUNTRY_PARAMS[c.req.param('country')]
   if (!cp) return c.json({ error: 'Unknown country' }, 400)
-  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...cp, ...TYPE_PARAMS.drama, page: c.req.query('page') || 1 })
+  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', without_genres: '16', ...cp, ...TYPE_PARAMS.drama, page: c.req.query('page') || 1 })
   return c.json(data.results.slice(0, 20))
 })
+
+// Only live-action series from the countries the Asian drama page covers
+const ASIAN_COUNTRIES = ['KR', 'JP', 'CN', 'TW', 'HK', 'TH', 'VN', 'PH']
+const isAsianDrama = (t) => !t.genre_ids?.includes(16) && t.origin_country?.some((cc) => ASIAN_COUNTRIES.includes(cc))
 
 app.get('/asiandrama/search', async (c) => {
   const { q, page = 1 } = c.req.query()
   if (!q?.trim()) return c.json({ error: 'Query required' }, 400)
-  const data = await tmdb('/search/tv', c.env, { query: q.trim(), page })
-  return c.json({ results: data.results, total_pages: data.total_pages })
+  const data = await tmdb('/search/tv', c.env, { query: q.trim(), page, include_adult: true })
+  return c.json({ results: data.results.filter(isAsianDrama), total_pages: data.total_pages })
 })
 
 // ── Dailymotion ────────────────────────────────────────────────

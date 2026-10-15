@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { movieService, tvService, watchlistService } from '../api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Icon from '../components/Icon';
+import { resolveAnimeEpisode } from '../animeMapping';
 import '../styles/Watch.css';
 
 // ── Embed sources ──────────────────────────────────────────────
@@ -40,7 +40,7 @@ function getEmbedUrl(source, mediaType, id, season, episode) {
       case 'multiembed':   return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
       case 'smashystream': return `https://player.smashy.stream/movie/${id}`;
       case 'moviesapi':    return `https://moviesapi.club/movie/${id}`;
-      case 'vidsrc':       return `https://vidsrc.xyz/embed/movie/${id}`;
+      case 'vidsrc':       return `https://vidsrc.xyz/embed/movie/${id}?ds_lang=en`;
       default:             return `https://vidlink.pro/movie/${id}?${VIDLINK_PARAMS}`;
     }
   } else {
@@ -51,7 +51,7 @@ function getEmbedUrl(source, mediaType, id, season, episode) {
       case 'multiembed':   return `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
       case 'smashystream': return `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}`;
       case 'moviesapi':    return `https://moviesapi.club/tv/${id}-${s}-${e}`;
-      case 'vidsrc':       return `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`;
+      case 'vidsrc':       return `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}?ds_lang=en`;
       default:             return `https://vidlink.pro/tv/${id}/${s}/${e}?${VIDLINK_PARAMS}`;
     }
   }
@@ -122,6 +122,12 @@ export default function Watch() {
   const [epLoading,       setEpLoading]       = useState(false);
   const [seasons,         setSeasons]         = useState([]);
   const [source,          setSource]          = useState('vidlink');
+  // Anime only: sub or dub through VidLink's anime player (needs a MyAnimeList id)
+  const [audio, setAudio] = useState(() => {
+    try { return localStorage.getItem('sf_anime_audio') === 'dub' ? 'dub' : 'sub'; } catch { return 'sub'; }
+  });
+  const [animeTarget, setAnimeTarget] = useState(null);
+  const [animeLookup, setAnimeLookup] = useState('idle'); // idle | loading | ready | none
 
   // 'none' | 'css' | 'document'
   const [pipMode,       setPipMode]       = useState('none');
@@ -129,7 +135,6 @@ export default function Watch() {
   const [sourceTimeout, setSourceTimeout] = useState(false);
   const timeoutRef = useRef(null);
 
-  const { isAuthenticated } = useAuth();
   const { addToast }        = useToast();
   const navigate            = useNavigate();
 
@@ -367,6 +372,30 @@ export default function Watch() {
     };
   }, []);
 
+  // ── Anime: find the MyAnimeList entry for this episode ─────────
+  const isAnime = mediaType === 'tv'
+    && !!media?.genres?.some((g) => g.id === 16)
+    && (media?.original_language === 'ja' || !!media?.origin_country?.includes('JP'));
+
+  useEffect(() => {
+    if (!isAnime) { setAnimeTarget(null); setAnimeLookup('idle'); return; }
+    let cancelled = false;
+    setAnimeLookup('loading');
+    resolveAnimeEpisode(id, selectedSeason, selectedEpisode).then((t) => {
+      if (cancelled) return;
+      setAnimeTarget(t);
+      setAnimeLookup(t ? 'ready' : 'none');
+    });
+    return () => { cancelled = true; };
+  }, [isAnime, id, selectedSeason, selectedEpisode]);
+
+  const chooseAudio = (value) => {
+    setAudio(value);
+    try { localStorage.setItem('sf_anime_audio', value); } catch { /* ignore */ }
+    setSource('vidlink'); // the only source here with a sub/dub switch
+    if (!playerReady) setPlayerReady(true);
+  };
+
   // ── Data fetching ────────────────────────────────────────────
   useEffect(() => {
     setPlayerReady(false);
@@ -435,7 +464,6 @@ export default function Watch() {
   }, [media]);
 
   const handleAddToWatchlist = async () => {
-    if (!isAuthenticated) { addToast('Sign in to save to your watchlist', 'info'); return; }
     try {
       const title = media.title || media.name;
       await watchlistService.addMovie(media.id, title, media.overview, media.poster_path,
@@ -460,7 +488,10 @@ export default function Watch() {
   const nowPlaying  = mediaType === 'tv' && currentEp
     ? `S${selectedSeason} E${selectedEpisode} — ${currentEp.name}`
     : title;
-  const embedUrl    = getEmbedUrl(source, mediaType, id, selectedSeason, selectedEpisode);
+  const useAnimePlayer = isAnime && source === 'vidlink' && animeTarget;
+  const embedUrl    = useAnimePlayer
+    ? `https://vidlink.pro/anime/${animeTarget.malId}/${animeTarget.number}/${audio}?fallback=true&${VIDLINK_PARAMS}`
+    : getEmbedUrl(source, mediaType, id, selectedSeason, selectedEpisode);
 
   const supportsDocPip = typeof window !== 'undefined' && !!window.documentPictureInPicture;
 
@@ -522,7 +553,7 @@ export default function Watch() {
           ) : (
             <>
               <iframe
-                key={`${source}-${id}-${selectedSeason}-${selectedEpisode}`}
+                key={embedUrl}
                 className="player-iframe"
                 src={embedUrl}
                 allowFullScreen
@@ -565,6 +596,18 @@ export default function Watch() {
           >
             <Icon name="shield" size={14} /> {adShield ? 'Ad shield on' : 'Ad shield off'}
           </button>
+
+          {isAnime && (
+            <div className="audio-toggle" role="group" aria-label="Audio"
+              title={animeLookup === 'none' ? "Sub/dub isn't available for this episode, so the regular player is used" : 'Japanese audio with subtitles, or English dub'}>
+              {['sub', 'dub'].map((a) => (
+                <button key={a} className={audio === a && animeLookup !== 'none' ? 'active' : ''}
+                  onClick={() => chooseAudio(a)} disabled={animeLookup === 'none'} aria-pressed={audio === a}>
+                  {a === 'sub' ? 'Sub' : 'Dub'}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="source-switcher" ref={sourceSwitcherRef}>
             <span className="source-switcher-label">Source:</span>

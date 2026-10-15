@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import {
   PROVIDERS, DM_TOPICS, listDramas, searchDramas, listDailymotionPortrait,
@@ -44,14 +44,22 @@ function DramaCard({ drama, onOpen }) {
 
 export default function ShortDramas() {
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const urlQuery = params.get('q') || '';
   const [tab, setTab] = useState(initialTab);
   const [topic, setTopic] = useState('all');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState(null);
   const [error, setError] = useState(null);
-  const [searchInput, setSearchInput] = useState('');
-  const [query, setQuery] = useState('');
+  const [searchInput, setSearchInput] = useState(urlQuery);
+  const [query, setQuery] = useState(urlQuery);
+
+  // Searches can arrive from the header search box via ?q=
+  useEffect(() => {
+    setSearchInput(urlQuery);
+    setQuery(urlQuery);
+  }, [urlQuery]);
   const [dmPage, setDmPage] = useState(1);
   const [dmHasMore, setDmHasMore] = useState(false);
 
@@ -120,10 +128,11 @@ export default function ShortDramas() {
 
   const submitSearch = (e) => {
     e.preventDefault();
-    setQuery(searchInput.trim());
+    const q = searchInput.trim();
+    setParams(q ? { q } : {}, { replace: true });
   };
 
-  const clearSearch = () => { setSearchInput(''); setQuery(''); };
+  const clearSearch = () => setParams({}, { replace: true });
 
   const openDrama = (drama) => {
     navigate(`/shortdramas/${drama.provider}/${encodeURIComponent(drama.id)}`, { state: { drama } });

@@ -7,25 +7,67 @@ import {
 } from '../shortDrama';
 import '../styles/ShortDramaWatch.css';
 
+// ── Captions ──
+// Browsers size native captions from the video's height, which is enormous on
+// a tall portrait video. We hide native rendering and draw cues ourselves.
+const CC_KEY = 'sd_captions_on';
+
+function parseTime(t) {
+  const parts = t.trim().replace(',', '.').split(':').map(Number);
+  while (parts.length < 3) parts.unshift(0);
+  return parts[0] * 3600 + parts[1] * 60 + parts[2];
+}
+
+// Minimal WebVTT / SRT parser → [{ start, end, text }]
+function parseSubtitles(raw) {
+  const cues = [];
+  for (const block of raw.replace(/\r/g, '').split(/\n\n+/)) {
+    const lines = block.split('\n');
+    const i = lines.findIndex((l) => l.includes('-->'));
+    if (i === -1) continue;
+    const [a, b] = lines[i].split('-->');
+    const text = lines.slice(i + 1).join('\n').trim();
+    if (text) cues.push({ start: parseTime(a), end: parseTime(b.trim().split(' ')[0]), text });
+  }
+  return cues;
+}
+
+const cleanCue = (text) => text.replace(/<[^>]+>/g, '').replace(/\{\\[^}]*\}/g, '').trim();
+
 // Plays an HLS (.m3u8) or MP4 stream in a <video>, using hls.js where the
 // browser has no native HLS support.
 function VerticalPlayer({ src, subtitle, onEnded, onError }) {
   const videoRef = useRef(null);
   const [needsTap, setNeedsTap] = useState(false);
+  const [caption, setCaption] = useState('');
+  const [hasCaptions, setHasCaptions] = useState(false);
+  const [ccOn, setCcOn] = useState(() => {
+    try { return localStorage.getItem(CC_KEY) !== 'off'; } catch { return true; }
+  });
+  const fileCues = useRef(null);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !src) return;
     setNeedsTap(false);
+    setCaption('');
+    setHasCaptions(false);
     let hls;
 
     const tryPlay = () => video.play().catch(() => setNeedsTap(true));
 
     if (/\.m3u8/i.test(src) && !video.canPlayType('application/vnd.apple.mpegurl') && Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true });
+      // subtitleDisplay:false keeps hls.js's text tracks 'hidden'; cues still load
+      hls = new Hls({ enableWorker: true, subtitleDisplay: false });
       hls.loadSource(src);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, tryPlay);
+      hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, (_e, data) => {
+        const tracks = data.subtitleTracks || [];
+        if (!tracks.length) return;
+        const en = tracks.findIndex((t) => /^en/i.test(t.lang || '') || /english/i.test(t.name || ''));
+        hls.subtitleTrack = en >= 0 ? en : 0;
+      });
       hls.on(Hls.Events.ERROR, (_e, data) => { if (data.fatal) onError?.('This stream could not be loaded.'); });
     } else {
       video.src = src;
@@ -38,6 +80,78 @@ function VerticalPlayer({ src, subtitle, onEnded, onError }) {
     };
   }, [src, onError]);
 
+  // Separate subtitle file (VTT/SRT): fetch and parse it ourselves
+  useEffect(() => {
+    fileCues.current = null;
+    if (!subtitle) return;
+    let cancelled = false;
+    fetch(subtitle)
+      .then((r) => (r.ok ? r.text() : Promise.reject()))
+      .then((raw) => {
+        if (cancelled) return;
+        const cues = parseSubtitles(raw);
+        if (cues.length) { fileCues.current = cues; setHasCaptions(true); }
+      })
+      .catch(() => { /* subtitle host blocks cross-site requests; play without */ });
+    return () => { cancelled = true; };
+  }, [subtitle]);
+
+  // Text tracks inside the stream (HLS subtitles): keep native rendering off
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const tracks = video.textTracks;
+    const hideAll = () => {
+      let any = false;
+      for (const t of tracks) {
+        if (t.kind === 'subtitles' || t.kind === 'captions') {
+          any = true;
+          if (t.mode === 'showing') t.mode = 'hidden';
+        }
+      }
+      if (any) setHasCaptions(true);
+    };
+    hideAll();
+    tracks.addEventListener('addtrack', hideAll);
+    tracks.addEventListener('change', hideAll);
+    return () => {
+      tracks.removeEventListener('addtrack', hideAll);
+      tracks.removeEventListener('change', hideAll);
+    };
+  }, [src]);
+
+  // Show the cue for the current time from whichever source has captions
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    let frame;
+    const tick = () => {
+      let text = '';
+      const t = video.currentTime;
+      if (fileCues.current) {
+        text = fileCues.current.filter((c) => t >= c.start && t <= c.end).map((c) => c.text).join('\n');
+      } else {
+        for (const track of video.textTracks) {
+          if (track.mode !== 'hidden' || !track.activeCues?.length) continue;
+          text = Array.from(track.activeCues).map((c) => c.text).join('\n');
+          break;
+        }
+      }
+      const next = cleanCue(text);
+      setCaption((prev) => (prev === next ? prev : next));
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [src]);
+
+  const toggleCc = () => {
+    setCcOn((on) => {
+      try { localStorage.setItem(CC_KEY, on ? 'off' : 'on'); } catch { /* ignore */ }
+      return !on;
+    });
+  };
+
   return (
     <div className="vp">
       <video
@@ -47,9 +161,23 @@ function VerticalPlayer({ src, subtitle, onEnded, onError }) {
         playsInline
         onEnded={onEnded}
         onError={() => onError?.('This stream could not be played.')}
-      >
-        {subtitle && <track kind="subtitles" src={subtitle} srcLang="en" label="English" default />}
-      </video>
+      />
+      {ccOn && caption && (
+        <div className="vp-caption" aria-live="polite">
+          {caption.split('\n').map((line, i) => <span key={i}>{line}</span>)}
+        </div>
+      )}
+      {hasCaptions && (
+        <button
+          className={`vp-cc ${ccOn ? 'is-on' : ''}`}
+          onClick={toggleCc}
+          aria-pressed={ccOn}
+          aria-label={ccOn ? 'Hide subtitles' : 'Show subtitles'}
+          title={ccOn ? 'Hide subtitles' : 'Show subtitles'}
+        >
+          CC
+        </button>
+      )}
       {needsTap && (
         <button className="vp-tap" onClick={() => { videoRef.current?.play(); setNeedsTap(false); }}>
           <span className="vp-tap-icon"><Icon name="play" size={30} /></span>

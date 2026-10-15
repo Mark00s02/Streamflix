@@ -16,6 +16,7 @@
 }
 
 .header-container {
+  position: relative;
   max-width: 1480px;
   height: 100%;
   margin: 0 auto;
@@ -79,8 +80,6 @@
   box-shadow: 0 0 12px rgba(245, 176, 65, 0.7);
 }
 
-.nav-auth-mobile { display: none; }
-
 /* ── Right side ── */
 .header-actions {
   display: flex;
@@ -89,39 +88,35 @@
   margin-left: auto;
 }
 
-.auth-section { display: flex; align-items: center; gap: 0.4rem; }
-
-.user-menu { display: flex; align-items: center; gap: 0.25rem; }
-
-.user-chip {
+.header-search {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
   border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
 }
 
-.user-avatar {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-weight: 700;
-  font-size: 0.85rem;
+.header-search input {
+  width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.92rem;
+  transition: width 0.25s var(--ease), padding 0.25s var(--ease);
 }
 
-.username {
-  font-size: 0.88rem;
-  color: var(--text-soft);
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.header-search.is-open {
+  background: rgba(18, 20, 27, 0.92);
+  border-color: var(--line-strong);
+}
+
+.header-search.is-open:focus-within { border-color: var(--accent); }
+
+.header-search.is-open input {
+  width: min(280px, 40vw);
+  padding: 0 0.25rem 0 1rem;
 }
 
 .icon-btn.hamburger { display: none; }
@@ -129,7 +124,6 @@
 @media (max-width: 1020px) {
   .header-container { gap: 1rem; }
   .icon-btn.hamburger { display: inline-grid; }
-  .auth-section { display: none; }
 
   .nav {
     position: fixed;
@@ -152,8 +146,16 @@
 
   .nav.nav-open { opacity: 1; transform: none; visibility: visible; }
 
+  /* The open search box takes over the bar on small screens */
+  .header-search.is-open {
+    position: absolute;
+    left: var(--gutter);
+    right: calc(var(--gutter) + 44px);
+    z-index: 2;
+  }
+  .header-search.is-open input { width: 100%; flex: 1; }
+
   .nav a { padding: 0.85rem 0.25rem; font-size: 1.05rem; border-bottom: 1px solid var(--line); border-radius: 0; }
   .nav a.active::after { left: 0.25rem; right: auto; width: 24px; bottom: 6px; }
 
-  .nav-auth-mobile { display: flex; gap: 0.6rem; padding-top: 1rem; }
 }

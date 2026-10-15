@@ -958,3 +958,25 @@
     height: 34px;
   }
 }
+
+/* ── Anime sub / dub ── */
+.audio-toggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.audio-toggle button {
+  min-width: 46px;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.audio-toggle button:hover:not(:disabled) { color: var(--text); }
+.audio-toggle button.active { background: var(--accent); color: var(--on-accent); }

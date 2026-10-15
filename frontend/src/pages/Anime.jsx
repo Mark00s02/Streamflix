@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tvService, watchlistService } from '../api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import MovieCard from '../components/MovieCard';
 import MediaRow from '../components/MediaRow';
@@ -16,7 +15,6 @@ const ANIME_GENRES = [
   { id: 10765, name: 'Sci-Fi & Fantasy' },
   { id: 9648, name: 'Mystery' },
   { id: 10749, name: 'Romance' },
-  { id: 16, name: 'Animation' },
 ];
 
 export default function Anime() {
@@ -39,7 +37,6 @@ export default function Anime() {
   const [searchTotal,   setSearchTotal]   = useState(null);
   const [searchPage,    setSearchPage]    = useState(1);
 
-  const { isAuthenticated } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -55,7 +52,7 @@ export default function Anime() {
     setLoading(true);
     try {
       const [topRes, popRes] = await Promise.allSettled([
-        tvService.getTopRated(),
+        tvService.getAnime(1, { sort: 'top' }),
         tvService.getAnime(1),
       ]);
       if (topRes.status === 'fulfilled') setTopRated(topRes.value.data.results || topRes.value.data);
@@ -74,13 +71,7 @@ export default function Anime() {
   const loadBrowse = async () => {
     setBrowseLoading(true);
     try {
-      let res;
-      if (activeGenre === null) {
-        res = await tvService.getAnime(page);
-      } else {
-        // Anime + specific genre
-        res = await tvService.discover(page, activeGenre);
-      }
+      const res = await tvService.getAnime(page, { genre: activeGenre });
       const data = res.data;
       setBrowseAnime(data.results || []);
       setTotalPages(data.total_pages || null);
@@ -92,11 +83,6 @@ export default function Anime() {
   };
 
   const handleAddToWatchlist = async (show) => {
-    if (!isAuthenticated) {
-      addToast('Sign in to save to your watchlist', 'info');
-      navigate('/login');
-      return;
-    }
     setAddingId(show.id);
     try {
       await watchlistService.addMovie(
@@ -134,7 +120,7 @@ export default function Anime() {
   const runSearch = async (q, pg) => {
     setSearchLoading(true);
     try {
-      const res = await tvService.search(q, pg);
+      const res = await tvService.searchAnime(q, pg);
       setSearchResults(res.data.results || []);
       setSearchTotal(res.data.total_pages || null);
     } catch {
@@ -196,7 +182,7 @@ export default function Anime() {
       ) : (
         <>
           <MediaRow title="Popular anime" items={popular} mediaType="anime" seeAllTo="/browse/anime" />
-          <MediaRow title="Top rated series" items={topRated} mediaType="tv" seeAllTo="/browse/top-rated-tv" />
+          <MediaRow title="Top rated anime" items={topRated} mediaType="anime" seeAllTo="/browse/top-rated-anime" />
         </>
       )}
 

@@ -13,7 +13,7 @@ export const BROWSE_CATEGORIES = {
   'trending-tv':      { title: 'Trending TV Shows',  mediaType: 'tv',    fetch: (p) => tvService.getTrending(p).then(list) },
   'anime':            { title: 'Popular Anime',      mediaType: 'anime', fetch: (p) => tvService.getAnime(p).then(paged) },
   // ── Anime page ──
-  'top-rated-tv':     { title: 'Top Rated Series',   mediaType: 'tv',    fetch: (p) => tvService.getTopRated(p).then(paged) },
+  'top-rated-anime':  { title: 'Top rated anime',    mediaType: 'anime', fetch: (p) => tvService.getAnime(p, { sort: 'top' }).then(paged) },
   // ── Asian Drama page ──
   'kdrama':     { title: 'Trending K-Drama',          mediaType: 'tv', fetch: (p) => asianDramaService.trending('korean', p).then(list) },
   'jdrama':     { title: 'Trending J-Drama',          mediaType: 'tv', fetch: (p) => asianDramaService.trending('japanese', p).then(list) },
