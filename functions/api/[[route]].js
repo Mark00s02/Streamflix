@@ -253,6 +253,65 @@ app.get('/dailymotion/video/:id', async (c) => {
   return c.json(await fetch(url.toString()).then(r => r.json()))
 })
 
+// ── Short-drama relay (Sansekai) ───────────────────────────────
+// Browsers call Sansekai directly; when a viewer's network is rate-limited or
+// banned, the frontend falls back to this relay. Sansekai's free tier allows
+// ~10 requests/min per IP and bans IPs that go over, so the relay caches hard
+// and caps itself at 8 upstream calls a minute per isolate.
+const SD_UPSTREAM = 'https://api.sansekai.my.id/api'
+const SD_ENDPOINT = /^(reelshort|netshort|freereels|pinedrama)\/(homepage|theaters|trending|search|get-detail|detail|detailAndAllEpisode|get-episode)$/
+const SD_PARAMS = ['lang', 'query', 'page', 'bookId', 'shortPlayId', 'key', 'collection_id', 'episodeNumber']
+const sdTtl = (endpoint) => ({ search: 600, 'get-episode': 1200, homepage: 1800, theaters: 1800, trending: 1800 })[endpoint] || 6 * 3600
+const sdMemory = new Map()
+let sdStamps = []
+let sdBlockedUntil = 0
+
+app.get('/sd/:provider/:endpoint', async (c) => {
+  const { provider, endpoint } = c.req.param()
+  if (!SD_ENDPOINT.test(`${provider}/${endpoint}`)) return c.json({ error: 'Unknown short drama endpoint' }, 404)
+
+  const upstream = new URL(`${SD_UPSTREAM}/${provider}/${endpoint}`)
+  for (const k of SD_PARAMS) {
+    const v = c.req.query(k)
+    if (v) upstream.searchParams.set(k, v)
+  }
+  const key = upstream.toString()
+  const ttl = sdTtl(endpoint)
+  const respond = (body, hit) => new Response(body, {
+    headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${Math.min(ttl, 600)}`, 'x-sd-cache': hit },
+  })
+
+  const mem = sdMemory.get(key)
+  if (mem && mem.expires > Date.now()) return respond(mem.body, 'memory')
+  const edgeCache = typeof caches !== 'undefined' ? caches.default : null
+  const cacheKey = new Request(key)
+  const hit = edgeCache && await edgeCache.match(cacheKey)
+  if (hit) return respond(await hit.text(), 'edge')
+
+  const now = Date.now()
+  if (now < sdBlockedUntil) return c.json({ error: 'Short dramas are paused for a bit. Try again later.', retryAt: sdBlockedUntil }, 429)
+  sdStamps = sdStamps.filter((t) => now - t < 60_000)
+  if (sdStamps.length >= 8) return c.json({ error: 'Short dramas hit their limit. Try again in a minute.', retryAt: sdStamps[0] + 60_000 }, 429)
+  sdStamps.push(now)
+
+  const res = await fetch(key, { headers: { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36' } })
+  if (res.status === 429 || res.status === 403) {
+    sdBlockedUntil = now + (res.status === 403 ? 15 * 60_000 : 70_000)
+    return c.json({ error: 'The short drama source is refusing requests right now.', retryAt: sdBlockedUntil }, 429)
+  }
+  if (!res.ok) return c.json({ error: `Short drama source error ${res.status}` }, 502)
+
+  const body = await res.text()
+  sdMemory.set(key, { body, expires: now + ttl * 1000 })
+  if (sdMemory.size > 300) sdMemory.delete(sdMemory.keys().next().value)
+  if (edgeCache) {
+    c.executionCtx.waitUntil(edgeCache.put(cacheKey, new Response(body, {
+      headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl}` },
+    })))
+  }
+  return respond(body, 'miss')
+})
+
 // ── Users (auth) ───────────────────────────────────────────────
 app.post('/users/register', async (c) => {
   const { username, email, password } = await c.req.json()

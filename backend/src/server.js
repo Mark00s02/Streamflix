@@ -8,6 +8,7 @@ import dailymotionRouter from './routes/dailymotion.js';
 import asianDramaRouter from './routes/asiandrama.js';
 import usersRouter from './routes/users.js';
 import watchlistRouter from './routes/watchlist.js';
+import shortDramaRouter from './routes/shortdrama.js';
 import authMiddleware from './middleware/auth.js';
 
 const app = express();
@@ -26,6 +27,7 @@ app.use('/api/tv', tvRouter);
 app.use('/api/dailymotion', dailymotionRouter);
 app.use('/api/asiandrama', asianDramaRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/sd', shortDramaRouter);
 app.use('/api/watchlist', authMiddleware, watchlistRouter);
 
 // Health check

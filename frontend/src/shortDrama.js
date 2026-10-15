@@ -23,16 +23,20 @@ const store = {
   },
 };
 
-// ── Availability: remember 429/403 so we stop calling until it's safe ──
-const BLOCK_KEY = 'sd_sansekai_blocked_until';
+// ── Availability ──
+// Direct: this browser calling Sansekai. If the viewer's network is limited or
+// banned we remember it and use our own relay (/api/sd, cached server-side).
+const DIRECT_BLOCK_KEY = 'sd_sansekai_blocked_until';
+const RELAY_BLOCK_KEY = 'sd_relay_blocked_until';
 
-export function sansekaiBlockedUntil() {
-  const until = store.get(BLOCK_KEY);
+const blockedUntil = (key) => {
+  const until = store.get(key);
   return until && until > Date.now() ? until : 0;
-}
+};
 
-function markBlocked(ms) {
-  store.set(BLOCK_KEY, Date.now() + ms);
+// When both routes are unavailable the short-drama apps are paused.
+export function sansekaiBlockedUntil() {
+  return blockedUntil(DIRECT_BLOCK_KEY) && blockedUntil(RELAY_BLOCK_KEY);
 }
 
 export class SourceUnavailableError extends Error {
@@ -43,7 +47,7 @@ export class SourceUnavailableError extends Error {
   }
 }
 
-// ── Throttle: at most 8 calls per rolling minute, shared across tabs ──
+// ── Throttle direct calls: at most 8 per rolling minute, shared across tabs ──
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 8;
 const STAMPS_KEY = 'sd_sansekai_calls';
@@ -71,7 +75,31 @@ function throttled(task) {
   return result;
 }
 
-// ── Cached GET against Sansekai ──
+class BlockedError extends Error {}
+
+async function fetchDirect(path) {
+  return throttled(async () => {
+    const res = await fetch(SANSEKAI + path);
+    if (res.status === 429) { store.set(DIRECT_BLOCK_KEY, Date.now() + 70_000); throw new BlockedError(); }
+    if (res.status === 403) { store.set(DIRECT_BLOCK_KEY, Date.now() + 24 * 60 * 60_000); throw new BlockedError(); }
+    if (!res.ok) throw new Error(`Short drama source error ${res.status}`);
+    return res.json();
+  });
+}
+
+async function fetchRelay(path) {
+  const res = await fetch(`/api/sd${path}`);
+  if (res.status === 429) {
+    const body = await res.json().catch(() => ({}));
+    const retryAt = body.retryAt || Date.now() + 60_000;
+    store.set(RELAY_BLOCK_KEY, retryAt);
+    throw new SourceUnavailableError(body.error || 'Short dramas hit their limit. Try again in a minute.', retryAt);
+  }
+  if (!res.ok) throw new Error(`Short drama source error ${res.status}`);
+  return res.json();
+}
+
+// ── Cached GET against Sansekai (direct first, relay as fallback) ──
 const memoryCache = new Map();
 
 async function sansekai(path, ttlMs = 10 * 60_000) {
@@ -79,26 +107,25 @@ async function sansekai(path, ttlMs = 10 * 60_000) {
   const hit = memoryCache.get(cacheKey) || store.get(cacheKey, sessionStorage);
   if (hit && hit.expires > Date.now()) return hit.data;
 
-  const blocked = sansekaiBlockedUntil();
-  if (blocked) throw new SourceUnavailableError('Short dramas are paused for a bit. Try again later.', blocked);
+  let data;
+  if (!blockedUntil(DIRECT_BLOCK_KEY)) {
+    try {
+      data = await fetchDirect(path);
+    } catch (err) {
+      // A network error here is usually a CORS/blocked response; try the relay
+      if (!(err instanceof BlockedError) && !(err instanceof TypeError)) throw err;
+    }
+  }
+  if (data === undefined) {
+    const relayBlocked = blockedUntil(RELAY_BLOCK_KEY);
+    if (relayBlocked) throw new SourceUnavailableError('Short dramas are paused for a bit. Try again later.', relayBlocked);
+    data = await fetchRelay(path);
+  }
 
-  return throttled(async () => {
-    const res = await fetch(SANSEKAI + path);
-    if (res.status === 429) {
-      markBlocked(70_000);
-      throw new SourceUnavailableError('Short dramas hit their limit. Try again in a minute.', Date.now() + 70_000);
-    }
-    if (res.status === 403) {
-      markBlocked(24 * 60 * 60_000);
-      throw new SourceUnavailableError('The short drama source has blocked this network.');
-    }
-    if (!res.ok) throw new Error(`Short drama source error ${res.status}`);
-    const data = await res.json();
-    const entry = { data, expires: Date.now() + ttlMs };
-    memoryCache.set(cacheKey, entry);
-    store.set(cacheKey, entry, sessionStorage);
-    return data;
-  });
+  const entry = { data, expires: Date.now() + ttlMs };
+  memoryCache.set(cacheKey, entry);
+  store.set(cacheKey, entry, sessionStorage);
+  return data;
 }
 
 // ── Response-shape helpers (upstream formats vary and change) ──
