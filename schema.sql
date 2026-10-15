@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   movie_id TEXT NOT NULL,
+  media_type TEXT NOT NULL DEFAULT 'movie',
   title TEXT,
   overview TEXT,
   poster_path TEXT,
@@ -17,5 +18,5 @@ CREATE TABLE IF NOT EXISTS watchlist (
   rating REAL,
   added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id),
-  UNIQUE(user_id, movie_id)
+  UNIQUE(user_id, movie_id, media_type)
 );

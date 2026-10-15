@@ -280,32 +280,66 @@ app.post('/users/login', async (c) => {
 })
 
 // ── Watchlist (protected) ──────────────────────────────────────
+const mediaTypeOf = (value) => (value === 'tv' ? 'tv' : 'movie')
+
+// One-time migration: older databases have no media_type column and a
+// UNIQUE(user_id, movie_id) constraint, so movies and series could collide.
+let watchlistSchemaReady = false
+const ensureWatchlistSchema = async (c, next) => {
+  if (!watchlistSchemaReady) {
+    const { results } = await c.env.DB.prepare('PRAGMA table_info(watchlist)').all()
+    if (!results.some((col) => col.name === 'media_type')) {
+      await c.env.DB.batch([
+        c.env.DB.prepare(`CREATE TABLE watchlist_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          movie_id TEXT NOT NULL,
+          media_type TEXT NOT NULL DEFAULT 'movie',
+          title TEXT, overview TEXT, poster_path TEXT, release_date TEXT, rating REAL,
+          added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          UNIQUE(user_id, movie_id, media_type)
+        )`),
+        c.env.DB.prepare(`INSERT INTO watchlist_new (user_id, movie_id, media_type, title, overview, poster_path, release_date, rating, added_at)
+          SELECT user_id, movie_id, 'movie', title, overview, poster_path, release_date, rating, added_at FROM watchlist`),
+        c.env.DB.prepare('DROP TABLE watchlist'),
+        c.env.DB.prepare('ALTER TABLE watchlist_new RENAME TO watchlist'),
+      ])
+    }
+    watchlistSchemaReady = true
+  }
+  await next()
+}
+
 const watchlist = new Hono()
-watchlist.use('*', requireAuth)
+watchlist.use('*', requireAuth, ensureWatchlistSchema)
 
 watchlist.get('/', async (c) => {
-  const { results } = await c.env.DB.prepare('SELECT * FROM watchlist WHERE user_id = ? ORDER BY added_at DESC').bind(c.get('userId')).all()
+  const { results } = await c.env.DB.prepare(
+    `SELECT movie_id AS id, media_type, title, overview, poster_path, release_date, rating, added_at
+     FROM watchlist WHERE user_id = ? ORDER BY added_at DESC`
+  ).bind(c.get('userId')).all()
   return c.json(results)
 })
 
 watchlist.post('/', async (c) => {
-  const { movieId, title, overview, posterPath, releaseDate, rating } = await c.req.json()
+  const { movieId, title, overview, posterPath, releaseDate, rating, mediaType } = await c.req.json()
   if (!movieId) return c.json({ error: 'Movie ID required' }, 400)
   try {
     await c.env.DB.prepare(
-      'INSERT INTO watchlist (user_id, movie_id, title, overview, poster_path, release_date, rating) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).bind(c.get('userId'), String(movieId), title, overview, posterPath, releaseDate, rating || 0).run()
-    return c.json({ message: 'Movie added to watchlist' }, 201)
+      'INSERT INTO watchlist (user_id, movie_id, media_type, title, overview, poster_path, release_date, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(c.get('userId'), String(movieId), mediaTypeOf(mediaType), title, overview, posterPath, releaseDate, rating || 0).run()
+    return c.json({ message: 'Added to watchlist' }, 201)
   } catch (err) {
-    if (err.message?.includes('UNIQUE')) return c.json({ error: 'Movie already in watchlist' }, 400)
+    if (err.message?.includes('UNIQUE')) return c.json({ error: 'Already in watchlist' }, 400)
     throw err
   }
 })
 
 watchlist.delete('/:movieId', async (c) => {
-  await c.env.DB.prepare('DELETE FROM watchlist WHERE user_id = ? AND movie_id = ?')
-    .bind(c.get('userId'), c.req.param('movieId')).run()
-  return c.json({ message: 'Movie removed from watchlist' })
+  await c.env.DB.prepare('DELETE FROM watchlist WHERE user_id = ? AND movie_id = ? AND media_type = ?')
+    .bind(c.get('userId'), c.req.param('movieId'), mediaTypeOf(c.req.query('type'))).run()
+  return c.json({ message: 'Removed from watchlist' })
 })
 
 app.route('/watchlist', watchlist)

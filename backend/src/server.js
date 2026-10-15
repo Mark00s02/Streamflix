@@ -17,8 +17,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Initialize database
-initializeDatabase();
+// Initialize database (local SQLite file: backend/database.db)
+await initializeDatabase();
 
 // Routes
 app.use('/api/movies', moviesRouter);

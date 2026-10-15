@@ -63,9 +63,10 @@ export const dailymotionService = {
 
 export const watchlistService = {
   getWatchlist: () => api.get('/watchlist'),
-  addMovie: (movieId, title, overview, posterPath, releaseDate, rating) =>
-    api.post('/watchlist', { movieId, title, overview, posterPath, releaseDate, rating }),
-  removeMovie: (movieId) => api.delete(`/watchlist/${movieId}`),
+  addMovie: (movieId, title, overview, posterPath, releaseDate, rating, mediaType = 'movie') =>
+    api.post('/watchlist', { movieId, title, overview, posterPath, releaseDate, rating, mediaType }),
+  removeMovie: (movieId, mediaType = 'movie') =>
+    api.delete(`/watchlist/${movieId}`, { params: { type: mediaType } }),
 };
 
 export default api;

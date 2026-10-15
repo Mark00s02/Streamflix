@@ -24,30 +24,34 @@ const DRAMA_SITES = [
   { id: 'kshow123',  label: 'Kshow123',  url: (t) => `https://kshow123.mom/?s=${encodeURIComponent(t)}` },
 ];
 
+// Browsers force-mute autoplay that wasn't started by a click inside the player
+// itself, so let VidLink wait for the user's first click — it then plays with sound.
+const VIDLINK_PARAMS = 'autoplay=false';
+
 function getEmbedUrl(source, mediaType, id, season, episode) {
   const s = season  || 1;
   const e = episode || 1;
   if (mediaType === 'movie') {
     switch (source) {
-      case 'vidlink':      return `https://vidlink.pro/movie/${id}`;
+      case 'vidlink':      return `https://vidlink.pro/movie/${id}?${VIDLINK_PARAMS}`;
       case '2embed':       return `https://www.2embed.cc/embed/${id}`;
       case 'autoembed':    return `https://player.autoembed.cc/embed/movie/${id}`;
       case 'multiembed':   return `https://multiembed.mov/?video_id=${id}&tmdb=1`;
       case 'smashystream': return `https://player.smashy.stream/movie/${id}`;
       case 'moviesapi':    return `https://moviesapi.club/movie/${id}`;
       case 'vidsrc':       return `https://vidsrc.xyz/embed/movie/${id}`;
-      default:             return `https://vidlink.pro/movie/${id}`;
+      default:             return `https://vidlink.pro/movie/${id}?${VIDLINK_PARAMS}`;
     }
   } else {
     switch (source) {
-      case 'vidlink':      return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+      case 'vidlink':      return `https://vidlink.pro/tv/${id}/${s}/${e}?${VIDLINK_PARAMS}`;
       case '2embed':       return `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}`;
       case 'autoembed':    return `https://player.autoembed.cc/embed/tv/${id}/${s}/${e}`;
       case 'multiembed':   return `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
       case 'smashystream': return `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}`;
       case 'moviesapi':    return `https://moviesapi.club/tv/${id}-${s}-${e}`;
       case 'vidsrc':       return `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}`;
-      default:             return `https://vidlink.pro/tv/${id}/${s}/${e}`;
+      default:             return `https://vidlink.pro/tv/${id}/${s}/${e}?${VIDLINK_PARAMS}`;
     }
   }
 }
@@ -133,6 +137,8 @@ export default function Watch() {
   const dragData  = useRef({ active: false, startX: 0, startY: 0, origLeft: 0, origTop: 0 });
   // Document-pip window ref
   const docPipWin = useRef(null);
+  // Source switcher (horizontal scroll with the mouse wheel)
+  const sourceSwitcherRef = useRef(null);
 
   // ── CSS-pip drag ─────────────────────────────────────────────
   const onDragMove = useCallback((e) => {
@@ -214,6 +220,20 @@ export default function Watch() {
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [playerReady, adShield, addToast]);
+
+  // ── Source switcher: vertical wheel → horizontal scroll ─────
+  // Needs a non-passive listener so we can preventDefault the page scroll.
+  useEffect(() => {
+    const el = sourceSwitcherRef.current;
+    if (!el) return;
+    const onWheel = (e) => {
+      if (el.scrollWidth <= el.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [loading]);
 
   // ── Source timeout detector ──────────────────────────────────
   // If the player iframe has been showing for 10 s and the user hasn't
@@ -418,7 +438,7 @@ export default function Watch() {
     try {
       const title = media.title || media.name;
       await watchlistService.addMovie(media.id, title, media.overview, media.poster_path,
-        media.release_date || media.first_air_date, media.vote_average);
+        media.release_date || media.first_air_date, media.vote_average, mediaType);
       addToast(`"${title}" added to watchlist`, 'success');
     } catch (err) {
       addToast(err.response?.status === 400 ? 'Already in your watchlist' : 'Failed to add', 'warning');
@@ -506,7 +526,7 @@ export default function Watch() {
                 src={embedUrl}
                 allowFullScreen
                 allow="autoplay; fullscreen; picture-in-picture; clipboard-write"
-                referrerPolicy="no-referrer"
+                referrerPolicy="origin"
                 title={nowPlaying}
               />
               {/* PiP launch button — hover over player */}
@@ -530,7 +550,7 @@ export default function Watch() {
 
       {/* ── Source bar ── */}
       <div className="source-bar">
-        <span className="source-bar-label">
+        <span className="source-bar-label" title={playerReady ? nowPlaying : title}>
           {playerReady ? `▶ ${nowPlaying}` : title}
         </span>
         <div className="source-bar-right">
@@ -545,7 +565,7 @@ export default function Watch() {
             {adShield ? '🛡 Ad Shield' : '🛡 Shield Off'}
           </button>
 
-          <div className="source-switcher">
+          <div className="source-switcher" ref={sourceSwitcherRef}>
             <span className="source-switcher-label">Source:</span>
             {SOURCES.map((s) => (
               <button key={s.id}
@@ -596,7 +616,7 @@ export default function Watch() {
         </div>
         <div className="watch-info-right">
           <div className="watch-title-row">
-            <h1 className="watch-title">{title}</h1>
+            <h1 className="watch-title" title={title}>{title}</h1>
             {mediaType === 'tv' && <span className="watch-type-badge tv">TV Series</span>}
           </div>
           <div className="watch-meta">

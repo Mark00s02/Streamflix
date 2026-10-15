@@ -28,8 +28,8 @@ export default function Watchlist() {
 
   const handleRemove = async (movie) => {
     try {
-      await watchlistService.removeMovie(movie.id);
-      setWatchlist((prev) => prev.filter((m) => m.id !== movie.id));
+      await watchlistService.removeMovie(movie.id, movie.media_type);
+      setWatchlist((prev) => prev.filter((m) => !(m.id === movie.id && m.media_type === movie.media_type)));
       addToast(`"${movie.title}" removed from watchlist`, 'info');
     } catch (error) {
       addToast('Failed to remove from watchlist', 'error');
@@ -40,7 +40,7 @@ export default function Watchlist() {
     <div className="watchlist">
       <div className="page-header">
         <h1>My Watchlist</h1>
-        {!loading && <p>{watchlist.length} movie{watchlist.length !== 1 ? 's' : ''} saved</p>}
+        {!loading && <p>{watchlist.length} title{watchlist.length !== 1 ? 's' : ''} saved</p>}
       </div>
 
       {loading && (
@@ -60,8 +60,8 @@ export default function Watchlist() {
 
       <div className="watchlist-grid">
         {watchlist.map((movie) => (
-          <div key={movie.id} className="watchlist-item">
-            <MovieCard movie={movie} showAddButton={false} />
+          <div key={`${movie.media_type}-${movie.id}`} className="watchlist-item">
+            <MovieCard movie={movie} showAddButton={false} mediaType={movie.media_type} />
             <button
               onClick={() => handleRemove(movie)}
               className="remove-btn"

@@ -104,7 +104,8 @@ export default function Anime() {
         show.overview,
         show.poster_path,
         show.first_air_date || show.release_date,
-        show.vote_average
+        show.vote_average,
+        'tv'
       );
       addToast(`"${show.name || show.title}" added to watchlist`, 'success');
     } catch (error) {

@@ -144,7 +144,7 @@ export default function AsianDrama() {
     try {
       await watchlistService.addMovie(
         show.id, show.name || show.title, show.overview,
-        show.poster_path, show.first_air_date || show.release_date, show.vote_average,
+        show.poster_path, show.first_air_date || show.release_date, show.vote_average, 'tv',
       );
       addToast(`"${show.name || show.title}" added to watchlist`, 'success');
     } catch (err) {
