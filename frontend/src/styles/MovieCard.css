@@ -1,4 +1,5 @@
 .movie-card {
+  min-width: 0; /* long nowrap titles must not widen the grid cell */
   background: #1a1a2e;
   border: 1px solid #2a2a4a;
   border-radius: 10px;

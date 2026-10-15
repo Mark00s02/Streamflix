@@ -87,6 +87,8 @@
 /* ── Card ── */
 .mr-card {
   flex: 0 0 148px;
+  width: 148px;
+  min-width: 0; /* stop long nowrap titles from widening the card */
   cursor: pointer;
   transition: transform 0.2s ease;
 }
@@ -222,6 +224,7 @@
 @media (max-width: 768px) {
   .mr-card {
     flex: 0 0 120px;
+    width: 120px;
   }
   .mr-card-poster {
     width: 120px;

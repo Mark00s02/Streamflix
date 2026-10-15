@@ -159,6 +159,7 @@
 
 /* ── Drama card ── */
 .drama-card {
+  min-width: 0;
   cursor: pointer;
   border-radius: 10px;
   overflow: hidden;
