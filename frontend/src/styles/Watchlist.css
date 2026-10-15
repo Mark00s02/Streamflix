@@ -2,41 +2,6 @@
   width: 100%;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-
-.page-header h1 {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.page-header p {
-  color: #888;
-  font-size: 1rem;
-}
-
-.loading-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 2rem;
-}
-
-.skeleton-card {
-  aspect-ratio: 2 / 3;
-  background: linear-gradient(90deg, #1a1a2e 25%, #22223a 50%, #1a1a2e 75%);
-  background-size: 200% 100%;
-  border-radius: 10px;
-  animation: shimmer 1.5s infinite;
-}
-
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -45,21 +10,21 @@
 .empty-watchlist {
   text-align: center;
   padding: 4rem 2rem;
-  background: #1a1a2e;
-  border: 2px dashed #2a2a4a;
+  background: var(--surface);
+  border: 2px dashed var(--line-strong);
   border-radius: 12px;
 }
 
 .empty-watchlist p {
-  color: #888;
+  color: var(--muted);
   font-size: 1.1rem;
   margin-bottom: 1.5rem;
 }
 
 .empty-watchlist a {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--accent);
+  color: var(--on-accent);
   padding: 0.75rem 2rem;
   border-radius: 6px;
   text-decoration: none;

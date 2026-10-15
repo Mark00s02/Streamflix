@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
@@ -9,13 +9,16 @@ import Movies from './pages/Movies';
 import Anime from './pages/Anime';
 import AsianDrama from './pages/AsianDrama';
 import ShortDramas from './pages/ShortDramas';
-import ShortDramaWatch from './pages/ShortDramaWatch';
 import Search from './pages/Search';
 import Watch from './pages/Watch';
 import Watchlist from './pages/Watchlist';
+import SeeAll from './pages/SeeAll';
 import Login from './components/Login';
 import Register from './components/Register';
 import './styles/App.css';
+
+// The vertical player pulls in hls.js, so load it only when it's opened
+const ShortDramaWatch = lazy(() => import('./pages/ShortDramaWatch'));
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
@@ -33,7 +36,8 @@ function AppRoutes() {
           <Route path="/anime" element={<Anime />} />
           <Route path="/asiandrama" element={<AsianDrama />} />
           <Route path="/shortdramas" element={<ShortDramas />} />
-          <Route path="/shortdramas/watch/:id" element={<ShortDramaWatch />} />
+          <Route path="/shortdramas/:provider/:id" element={<Suspense fallback={<div className="empty-state"><div className="spinner" /></div>}><ShortDramaWatch /></Suspense>} />
+          <Route path="/browse/:category" element={<SeeAll />} />
           <Route path="/search" element={<Search />} />
           <Route path="/watch/:id" element={<Watch />} />
           <Route

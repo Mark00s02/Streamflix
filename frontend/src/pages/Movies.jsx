@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import MovieCard from '../components/MovieCard';
 import '../styles/Movies.css';
 
+import Icon from '../components/Icon';
 const SORT_OPTIONS = [
   { value: 'popularity.desc', label: 'Most Popular' },
   { value: 'vote_average.desc', label: 'Highest Rated' },
@@ -165,11 +166,11 @@ export default function Movies() {
 
       <div className="pagination">
         <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || loading}>
-          ← Prev
+          <Icon name="left" size={16} /> Previous
         </button>
         <span>Page {page}{totalPages ? ` of ${maxPage}` : ''}</span>
         <button onClick={() => setPage((p) => Math.min(maxPage, p + 1))} disabled={page >= maxPage || loading}>
-          Next →
+          Next <Icon name="right" size={16} />
         </button>
       </div>
     </div>

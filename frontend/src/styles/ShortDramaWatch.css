@@ -1,300 +1,173 @@
-/* ── Short Drama Watch page ── */
-.sdwatch-page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+.sdw-page { width: 100%; }
+
+.sdw-back { margin-bottom: 1.25rem; }
+
+.sdw-layout {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: start;
 }
 
-/* ── Loading skeletons ── */
-.sdwatch-loading { display: flex; flex-direction: column; gap: 1rem; }
-.sdwatch-skeleton-player {
-  width: 100%; aspect-ratio: 16/9; border-radius: 12px;
-  background: rgba(255,255,255,0.06); animation: sdwatch-shimmer 1.4s infinite;
-}
-.sdwatch-skeleton-info {
-  height: 120px; border-radius: 8px;
-  background: rgba(255,255,255,0.04); animation: sdwatch-shimmer 1.4s infinite;
-}
-@keyframes sdwatch-shimmer {
-  0%   { opacity: 0.6; }
-  50%  { opacity: 1;   }
-  100% { opacity: 0.6; }
-}
-
-/* ── Player wrapper ── */
-.sdwatch-player-wrap {
+/* ── Stage: the phone-shaped screen with the cover's light spilling around it ── */
+.sdw-stage {
   position: relative;
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: #000;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  isolation: isolate;
 }
 
-.sdwatch-player-pip {
-  position: fixed !important;
-  bottom: 24px;
-  right: 24px;
-  width: 400px;
-  aspect-ratio: 16/9;
-  border-radius: 12px;
-  z-index: 9999;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
-  cursor: move;
-}
-
-/* ── PiP chrome ── */
-.sdwatch-pip-chrome {
+.sdw-stage-glow {
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 32px;
-  background: rgba(0,0,0,0.8);
+  inset: 4% -20%;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  filter: blur(70px) saturate(1.4);
+  opacity: 0.45;
+}
+
+.sdw-frame {
+  position: relative;
+  height: min(78vh, 760px);
+  aspect-ratio: 9 / 16;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 0 0 1px var(--line-strong), 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+}
+
+.vp { position: absolute; inset: 0; }
+
+.vp-video {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #000;
+  object-fit: contain;
+}
+
+.vp-tap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--text);
+  font-weight: 600;
+  border-radius: 0;
+}
+.vp-tap-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  padding-left: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.sdw-frame-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--muted);
+}
+.sdw-frame-state .icon { color: var(--accent); }
+
+.sdw-stepper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.sdw-stepper-count { color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; min-width: 9ch; text-align: center; }
+
+/* ── Side panel ── */
+.sdw-side { min-width: 0; padding-top: 0.5rem; }
+
+.sdw-source { color: var(--accent); font-weight: 600; font-size: 0.9rem; }
+
+.sdw-title {
+  margin-top: 0.3rem;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.sdw-desc {
+  margin-top: 0.9rem;
+  max-width: 62ch;
+  color: var(--text-soft);
+  line-height: 1.65;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sdw-eps-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px;
-  font-size: 11px;
-  color: rgba(255,255,255,0.7);
-  z-index: 2;
-  cursor: move;
-  user-select: none;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 2rem 0 0.9rem;
 }
+.sdw-eps-head h2 { font-size: 1.15rem; }
 
-.sdwatch-pip-chrome span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sdwatch-pip-chrome button {
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.6);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-left: 4px;
-  transition: background 0.15s;
-}
-.sdwatch-pip-chrome button:hover { background: rgba(255,255,255,0.15); }
-
-/* ── Document PiP placeholder ── */
-.sdwatch-pip-placeholder {
-  width: 100%; aspect-ratio: 16/9;
-  background: rgba(255,255,255,0.03);
-  border: 2px dashed rgba(255, 80, 120, 0.3);
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 0;
-}
-
-.sdwatch-pip-inner {
-  text-align: center;
-  color: rgba(255,255,255,0.55);
-}
-
-.sdwatch-pip-inner span { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
-.sdwatch-pip-inner p   { font-size: 1rem; margin-bottom: 0.25rem; }
-.sdwatch-pip-sub       { font-size: 0.85rem; color: rgba(255,255,255,0.35); }
-
-.sdwatch-pip-inner button {
-  margin-top: 1rem;
-  padding: 0.5rem 1.2rem;
-  background: rgba(255, 80, 120, 0.2);
-  border: 1px solid rgba(255, 80, 120, 0.4);
-  border-radius: 8px;
-  color: #ff8fa3;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.sdwatch-pip-inner button:hover { background: rgba(255, 80, 120, 0.35); }
-
-.sdwatch-pip-spacer { width: 100%; aspect-ratio: 16/9; }
-
-/* ── Play overlay ── */
-.sdwatch-overlay {
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, #2d0015 0%, #5c0a2e 100%);
-  display: flex; align-items: center; justify-content: center;
-}
-
-.sdwatch-overlay-inner { text-align: center; }
-
-.sdwatch-play-btn {
-  padding: 1rem 2.5rem;
-  background: linear-gradient(135deg, #ff507a, #c0003f);
-  border: none; border-radius: 50px;
-  color: #fff; font-size: 1.2rem; font-weight: 700;
-  cursor: pointer; letter-spacing: 0.02em;
-  box-shadow: 0 4px 20px rgba(255,80,120,0.4);
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-
-.sdwatch-play-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 24px rgba(255,80,120,0.55);
-}
-
-.sdwatch-overlay-inner p {
-  margin-top: 0.75rem;
-  color: rgba(255,255,255,0.55);
-  font-size: 0.9rem;
-}
-
-/* ── Iframe ── */
-.sdwatch-iframe {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  border: none; display: block;
-}
-
-/* ── PiP launch button (hover over player) ── */
-.sdwatch-pip-btn {
-  position: absolute;
-  bottom: 12px; right: 12px;
-  display: flex; align-items: center; gap: 5px;
-  padding: 6px 12px;
-  background: rgba(0,0,0,0.65);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 8px;
-  color: rgba(255,255,255,0.8);
-  font-size: 0.8rem; font-weight: 600;
-  cursor: pointer;
-  opacity: 0; transition: opacity 0.2s;
-  z-index: 3;
-}
-
-.sdwatch-player-wrap:hover .sdwatch-pip-btn { opacity: 1; }
-.sdwatch-pip-btn svg { width: 16px; height: 16px; }
-.sdwatch-pip-btn:hover { background: rgba(255, 80, 120, 0.4); }
-
-/* ── Source / control bar ── */
-.sdwatch-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 0 0 10px 10px;
-  margin-bottom: 1.75rem;
-}
-
-.sdwatch-bar-title {
-  font-size: 0.85rem; font-weight: 500;
-  color: rgba(255,255,255,0.65);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  max-width: 50%;
-}
-
-.sdwatch-bar-right {
-  display: flex; align-items: center; gap: 0.5rem;
-}
-
-.sdwatch-shield-btn {
-  padding: 0.35rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.8rem; font-weight: 600;
-  cursor: pointer; transition: all 0.2s;
-  border: 1px solid transparent;
-}
-
-.sdwatch-shield-btn.on {
-  background: rgba(76, 175, 80, 0.15);
-  border-color: rgba(76, 175, 80, 0.4);
-  color: #81c784;
-}
-
-.sdwatch-shield-btn.off {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.45);
-}
-
-.sdwatch-pip-bar-btn {
-  padding: 0.35rem 0.8rem;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 6px;
-  color: rgba(255,255,255,0.7);
-  font-size: 0.8rem; font-weight: 600;
-  cursor: pointer; transition: all 0.2s;
-}
-
-.sdwatch-pip-bar-btn:hover { background: rgba(255, 80, 120, 0.2); border-color: rgba(255,80,120,0.4); color: #ff8fa3; }
-.sdwatch-pip-bar-btn.active { background: rgba(255, 80, 120, 0.2); border-color: rgba(255,80,120,0.4); color: #ff8fa3; }
-
-/* ── Video info ── */
-.sdwatch-info { padding: 0 0.5rem; }
-
-.sdwatch-title-row {
-  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-}
-
-.sdwatch-title {
-  font-size: 1.6rem; font-weight: 800;
-  color: #fff; margin: 0;
-}
-
-.sdwatch-badge {
-  padding: 0.25rem 0.75rem;
-  background: linear-gradient(135deg, rgba(255,80,120,0.25), rgba(192,0,63,0.25));
-  border: 1px solid rgba(255,80,120,0.4);
-  border-radius: 6px;
-  font-size: 0.75rem; font-weight: 700;
-  color: #ff8fa3;
-  white-space: nowrap;
-}
-
-.sdwatch-meta {
-  display: flex; gap: 1rem; flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-}
-
-.sdwatch-meta span {
+.sdw-autonext {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
   font-size: 0.88rem;
-  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+}
+.sdw-autonext input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+.sdw-eps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 0.5rem;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-.sdwatch-desc {
-  font-size: 0.92rem;
-  color: rgba(255,255,255,0.6);
-  line-height: 1.6;
-  margin-bottom: 1.25rem;
-  max-width: 720px;
+.sdw-ep {
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text-soft);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sdw-ep:hover { border-color: var(--line-strong); color: var(--text); }
+.sdw-ep.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+.sdw-hint { margin-top: 1rem; color: var(--faint); font-size: 0.85rem; }
+
+@media (max-width: 860px) {
+  .sdw-layout { grid-template-columns: 1fr; gap: 1.5rem; }
+  .sdw-frame { height: auto; width: min(100%, 420px); }
+  .sdw-eps { max-height: none; }
 }
 
-.sdwatch-actions {
-  display: flex; gap: 0.75rem; flex-wrap: wrap;
-}
-
-.sdwatch-btn-primary {
-  padding: 0.65rem 1.6rem;
-  background: linear-gradient(135deg, #ff507a, #c0003f);
-  border: none; border-radius: 50px;
-  color: #fff; font-size: 0.95rem; font-weight: 700;
-  cursor: pointer; transition: opacity 0.2s;
-}
-.sdwatch-btn-primary:hover { opacity: 0.85; }
-
-.sdwatch-btn-ghost {
-  padding: 0.65rem 1.4rem;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 50px;
-  color: rgba(255,255,255,0.7);
-  font-size: 0.9rem;
-  cursor: pointer; transition: all 0.2s;
-}
-.sdwatch-btn-ghost:hover { background: rgba(255,255,255,0.12); color: #fff; }
-
-/* ── Responsive ── */
-@media (max-width: 640px) {
-  .sdwatch-page { padding: 1rem 0.5rem 2rem; }
-  .sdwatch-title { font-size: 1.2rem; }
-  .sdwatch-player-pip { width: 280px; }
-  .sdwatch-bar-title { max-width: 100%; }
-}
+.sdw-external { margin-top: 1.5rem; }

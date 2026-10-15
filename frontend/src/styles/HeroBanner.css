@@ -1,218 +1,199 @@
-/* ── Hero Banner ── */
-.hero-banner {
+/* Full-bleed: break out of <main>'s padding and slide under the fixed header */
+.hero {
   position: relative;
-  width: 100%;
-  min-height: 520px;
-  background: #111 center/cover no-repeat;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: calc(-1 * (var(--header-h) + 1.5rem));
+  margin-bottom: 1rem;
+  min-height: min(88vh, 860px);
   display: flex;
-  align-items: flex-end;
-  margin: -2rem -2rem 2.5rem -2rem;
-  width: calc(100% + 4rem);
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  isolation: isolate;
 }
 
-.hero-gradient {
+.hero-backdrop {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(10, 10, 20, 0.98) 0%,
-    rgba(10, 10, 20, 0.85) 40%,
-    rgba(10, 10, 20, 0.3) 70%,
-    rgba(10, 10, 20, 0.1) 100%
-  ),
-  linear-gradient(
-    to top,
-    rgba(10, 10, 20, 0.9) 0%,
-    transparent 60%
-  );
+  z-index: -2;
+  background-size: cover;
+  background-position: center 20%;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 1.2s var(--ease), transform 9s linear;
+}
+
+.hero-backdrop.is-active { opacity: 1; transform: scale(1); }
+
+/* The projector beam: warm light spilling from the top-left, then the room
+   going dark toward the content below. */
+.hero-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(245, 176, 65, 0.16), transparent 55%),
+    linear-gradient(90deg, rgba(8, 9, 13, 0.92) 0%, rgba(8, 9, 13, 0.6) 38%, rgba(8, 9, 13, 0) 70%),
+    linear-gradient(0deg, var(--bg) 0%, rgba(8, 9, 13, 0.7) 22%, rgba(8, 9, 13, 0) 55%);
 }
 
 .hero-content {
-  position: relative;
-  z-index: 1;
-  padding: 3rem 3rem 3.5rem;
-  max-width: 680px;
+  width: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  animation: hero-in 0.7s var(--ease) both;
 }
 
-.hero-badges {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
 }
 
-.hero-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.trending-badge {
-  background: linear-gradient(135deg, #ff9800, #e53935);
-  color: #fff;
-}
-
-.year-badge {
-  background: rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.8);
-  backdrop-filter: blur(4px);
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin-bottom: 0.9rem;
 }
 
 .hero-title {
-  font-size: 3rem;
+  max-width: 14ch;
+  font-size: clamp(2.6rem, 7.2vw, 6.2rem);
+  line-height: 0.95;
   font-weight: 800;
-  color: #fff;
-  line-height: 1.1;
-  margin-bottom: 0.75rem;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  letter-spacing: -0.035em;
+  font-variation-settings: 'wdth' 125;
+  text-wrap: balance;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.45);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.hero-genres {
+.hero-facts {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1.1rem;
+  margin-top: 1.1rem;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
 }
 
-.hero-genre-pill {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.7);
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  padding: 3px 10px;
-  border-radius: 20px;
-  backdrop-filter: blur(4px);
+.hero-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .hero-overview {
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.8);
+  max-width: 56ch;
+  margin-top: 1rem;
+  color: var(--text-soft);
+  font-size: 1.02rem;
   line-height: 1.6;
-  margin-bottom: 1.25rem;
-  max-width: 560px;
 }
 
-.hero-meta {
+.hero-actions {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.6rem;
 }
 
-.hero-votes {
-  color: rgba(255,255,255,0.5);
-  font-size: 0.82rem;
+/* ── Picker ── */
+.hero-picker {
+  width: 100%;
+  max-width: 1480px;
+  margin: 2.5rem auto 0;
+  padding: 0 var(--gutter) 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
-/* ── Score Ring ── */
-.score-ring {
+.hero-pick {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 54px;
+  gap: 0.45rem;
+  text-align: left;
+  opacity: 0.55;
+  transition: opacity 0.2s;
 }
 
-.score-ring svg {
-  display: block;
+.hero-pick:hover,
+.hero-pick.is-active { opacity: 1; }
+
+.hero-pick img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
 }
 
-.score-ring.ring-green { color: #4caf50; }
-.score-ring.ring-yellow { color: #ffb300; }
-.score-ring.ring-red { color: #f44336; }
+.hero-pick.is-active img { border-color: var(--accent); }
 
-.ring-text {
+.hero-pick-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-pick-progress {
   position: absolute;
-  top: 6px;
   left: 0;
   right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 42px;
+  top: -8px;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left;
+  animation: pick-progress linear both;
 }
 
-.ring-pct {
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1;
-}
+@keyframes pick-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
-.ring-pct sup {
-  font-size: 0.55rem;
-  vertical-align: super;
-}
-
-.ring-label {
-  font-size: 0.58rem;
-  font-weight: 700;
-  color: rgba(255,255,255,0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-  margin-top: 1px;
-}
-
-/* ── Hero Actions ── */
-.hero-actions {
-  display: flex;
-  gap: 0.85rem;
-  flex-wrap: wrap;
-}
-
-.hero-play-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  padding: 0.8rem 2rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
-  letter-spacing: 0.02em;
-}
-
-.hero-play-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.hero-info-btn {
-  background: rgba(255,255,255,0.12);
-  color: #fff;
-  padding: 0.8rem 2rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.25);
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: background 0.2s;
-}
-
-.hero-info-btn:hover {
-  background: rgba(255,255,255,0.2);
-}
-
-@media (max-width: 768px) {
-  .hero-banner {
-    min-height: 420px;
-    margin: -2rem -2rem 2rem -2rem;
+@media (max-width: 900px) {
+  .hero { min-height: 78vh; }
+  .hero-picker {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 42%;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+  .hero-picker::-webkit-scrollbar { display: none; }
+}
 
-  .hero-content {
-    padding: 2rem 1.5rem 2.5rem;
+@media (max-width: 600px) {
+  .hero { margin-top: calc(-1 * (var(--header-h) + 1.5rem)); min-height: 72vh; }
+  .hero-shade {
+    background:
+      radial-gradient(120% 60% at 0% 0%, rgba(245, 176, 65, 0.14), transparent 55%),
+      linear-gradient(0deg, var(--bg) 0%, rgba(8, 9, 13, 0.82) 40%, rgba(8, 9, 13, 0.15) 80%);
   }
+  .hero-overview { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+}
 
-  .hero-title {
-    font-size: 2rem;
-  }
-
-  .hero-overview {
-    font-size: 0.88rem;
-  }
+/* Loading placeholder used by Home */
+.hero-skeleton {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-top: calc(-1 * (var(--header-h) + 1.5rem));
+  height: min(88vh, 860px);
+  background: radial-gradient(120% 80% at 0% 0%, rgba(245, 176, 65, 0.08), transparent 55%), var(--surface);
 }

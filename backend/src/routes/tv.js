@@ -9,7 +9,7 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 router.get('/trending', async (req, res) => {
   try {
     const response = await axios.get(`${TMDB_BASE_URL}/trending/tv/week`, {
-      params: { api_key: TMDB_API_KEY },
+      params: { api_key: TMDB_API_KEY, page: parseInt(req.query.page) || 1 },
     });
     res.json(response.data.results);
   } catch (error) {

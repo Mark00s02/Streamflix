@@ -5,23 +5,17 @@
 
 /* ── Header ── */
 .ad-header {
-  background: linear-gradient(135deg, #1a0b2e 0%, #3d0c3e 35%, #6b1a2e 65%, #1a0b2e 100%);
-  border-radius: 12px;
-  padding: 2.25rem 2.5rem;
-  margin-bottom: 1.75rem;
-  border: 1px solid rgba(210, 100, 180, 0.25);
   position: relative;
   overflow: hidden;
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1.25rem, 4vw, 3rem);
+  margin-bottom: 2.25rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: radial-gradient(120% 90% at 0% 0%, rgba(245, 176, 65, 0.14), transparent 55%), var(--surface);
 }
 
 .ad-header::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(255, 80, 160, 0.18), transparent 50%),
-    radial-gradient(ellipse at 80% 30%, rgba(140, 60, 255, 0.14), transparent 50%);
-  pointer-events: none;
+  content: none;
 }
 
 .ad-header-content {
@@ -30,14 +24,11 @@
 }
 
 .ad-header-title {
-  font-size: 2.6rem;
-  font-weight: 900;
-  background: linear-gradient(135deg, #ff6eb4 0%, #d580ff 50%, #ff9de2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
   margin: 0 0 0.4rem;
-  letter-spacing: -0.02em;
 }
 
 .ad-header-sub {
@@ -56,10 +47,10 @@
 .ad-header-tags span {
   padding: 0.2rem 0.65rem;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 150, 220, 0.18);
+  border: 1px solid rgba(245, 176, 65, 0.18);
   border-radius: 999px;
   font-size: 0.75rem;
-  color: rgba(255, 200, 230, 0.7);
+  color: rgba(245, 176, 65, 0.7);
 }
 
 /* ── Search bar ── */
@@ -78,7 +69,7 @@
   max-width: 480px;
   padding: 0.6rem 1rem;
   background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(210, 100, 180, 0.25);
+  border: 1px solid rgba(245, 176, 65, 0.25);
   border-radius: 8px;
   color: #fff;
   font-size: 0.95rem;
@@ -87,7 +78,7 @@
 }
 
 .ad-search-input:focus {
-  border-color: rgba(255, 110, 180, 0.6);
+  border-color: rgba(245, 176, 65, 0.6);
 }
 
 .ad-search-input::placeholder {
@@ -96,10 +87,10 @@
 
 .ad-search-btn {
   padding: 0.6rem 1.2rem;
-  background: linear-gradient(135deg, #ff6eb4, #9b2dca);
+  background: var(--accent);
   border: none;
   border-radius: 8px;
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -159,8 +150,6 @@
   font-size: 0.78rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.35);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   min-width: 52px;
   flex-shrink: 0;
 }
@@ -170,34 +159,6 @@
   display: flex;
   gap: 0.35rem;
   flex-wrap: wrap;
-}
-
-.ad-country-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.38rem 0.9rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.18s;
-  white-space: nowrap;
-}
-
-.ad-country-tab:hover {
-  background: rgba(210, 100, 200, 0.14);
-  border-color: rgba(210, 100, 200, 0.3);
-  color: #fff;
-}
-
-.ad-country-tab.active {
-  background: linear-gradient(135deg, rgba(255, 80, 160, 0.22), rgba(140, 60, 255, 0.22));
-  border-color: rgba(210, 100, 200, 0.5);
-  color: #ff9de2;
-  font-weight: 700;
 }
 
 .ad-flag {
@@ -212,62 +173,7 @@
   flex-wrap: wrap;
 }
 
-.ad-type-pill {
-  padding: 0.38rem 1rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.18s;
-}
-
-.ad-type-pill:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #fff;
-}
-
-.ad-type-pill.active {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #fff;
-  font-weight: 700;
-}
-
 /* BL pill accent */
-.ad-type-pill--bl {
-  border-color: rgba(255, 110, 180, 0.25);
-  color: rgba(255, 160, 210, 0.8);
-}
-.ad-type-pill--bl:hover {
-  background: rgba(255, 110, 180, 0.12);
-  border-color: rgba(255, 110, 180, 0.45);
-  color: #ffb3e6;
-}
-.ad-type-pill--bl.active {
-  background: linear-gradient(135deg, rgba(255, 80, 160, 0.28), rgba(200, 50, 140, 0.28));
-  border-color: rgba(255, 110, 180, 0.6);
-  color: #ff9de2;
-}
-
-/* GL pill accent */
-.ad-type-pill--gl {
-  border-color: rgba(160, 100, 255, 0.25);
-  color: rgba(200, 160, 255, 0.8);
-}
-.ad-type-pill--gl:hover {
-  background: rgba(160, 100, 255, 0.12);
-  border-color: rgba(160, 100, 255, 0.45);
-  color: #d4aaff;
-}
-.ad-type-pill--gl.active {
-  background: linear-gradient(135deg, rgba(140, 60, 255, 0.28), rgba(100, 30, 200, 0.28));
-  border-color: rgba(160, 100, 255, 0.6);
-  color: #d4aaff;
-}
 
 /* ── Active filter summary ── */
 .ad-filter-summary {
@@ -353,8 +259,8 @@
 }
 
 .ad-browse .pagination button {
-  background: linear-gradient(135deg, #ff6eb4, #9b2dca);
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   padding: 0.65rem 1.4rem;
   border-radius: 6px;
   font-weight: 600;
@@ -388,6 +294,4 @@
 
 @media (max-width: 480px) {
   .ad-header-title { font-size: 1.6rem; }
-  .ad-country-tab { font-size: 0.8rem; padding: 0.32rem 0.7rem; }
-  .ad-type-pill   { font-size: 0.8rem; padding: 0.32rem 0.8rem; }
 }

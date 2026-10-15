@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { movieService, tvService, watchlistService } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import Icon from '../components/Icon';
 import '../styles/Watch.css';
 
 // ── Embed sources ──────────────────────────────────────────────
@@ -82,14 +83,14 @@ function EpisodeCard({ ep, isActive, onClick }) {
         {stillUrl
           ? <img src={stillUrl} alt={ep.name} loading="lazy" />
           : <div className="ep-still-placeholder">No Preview</div>}
-        {isActive && <div className="ep-playing-badge">▶ Playing</div>}
+        {isActive && <div className="ep-playing-badge"><Icon name="play" size={12} /> Playing</div>}
         {ep.runtime && <span className="ep-runtime">{ep.runtime}m</span>}
       </div>
       <div className="ep-info">
         <div className="ep-header">
           <span className="ep-number">E{ep.episode_number}</span>
           {score && score !== '0.0' && (
-            <span className="ep-score" style={{ color: scoreColor }}>★ {score}</span>
+            <span className="ep-score" style={{ color: scoreColor }}><Icon name="star" size={12} /> {score}</span>
           )}
         </div>
         <p className="ep-title">{ep.name}</p>
@@ -193,7 +194,7 @@ export default function Watch() {
       window.focus();
       if (!cooldown) {
         cooldown = true;
-        addToast('🛡 Ad popup blocked — pulled you back', 'warning');
+        addToast('Blocked an ad popup and brought you back', 'warning');
         setTimeout(() => { cooldown = false; }, 3000);
       }
     };
@@ -302,7 +303,7 @@ export default function Watch() {
       // Build a minimal page inside the popup
       popup.document.open();
       popup.document.write(`<!DOCTYPE html><html><head>
-        <title>▶ StreamFlix PiP</title>
+        <title>StreamFlix mini player</title>
         <style>
           *{margin:0;padding:0;box-sizing:border-box}
           html,body{background:#000;width:100%;height:100%;overflow:hidden}
@@ -316,7 +317,7 @@ export default function Watch() {
         </style>
       </head><body>
         <div id="bar">
-          <span>▶ StreamFlix — ${(currentLabel || '').replace(/"/g, '&quot;')}</span>
+          <span>${(currentLabel || 'StreamFlix').replace(/"/g, '&quot;')}</span>
           <span style="color:#667eea;font-size:10px">PiP</span>
         </div>
         <iframe src="${currentEmbedUrl}" allowfullscreen
@@ -478,7 +479,7 @@ export default function Watch() {
       {pipMode === 'document' && (
         <div className="pip-doc-placeholder">
           <div className="pip-doc-placeholder-inner">
-            <span className="pip-doc-icon">⊡</span>
+            <span className="pip-doc-icon"><Icon name="pip" size={34} /></span>
             <p>Playing in a separate window</p>
             <p className="pip-doc-sub">{nowPlaying}</p>
             <p className="pip-doc-sub" style={{ marginTop: '0.25rem' }}>
@@ -501,11 +502,11 @@ export default function Watch() {
           {/* CSS pip chrome (drag handle + controls) */}
           {pipMode === 'css' && (
             <div className="pip-chrome" onMouseDown={onDragStart} onTouchStart={onDragStart}>
-              <span className="pip-now-playing">▶ {nowPlaying}</span>
+              <span className="pip-now-playing">{nowPlaying}</span>
               <div className="pip-btns">
-                <button className="pip-btn-ctrl" onClick={exitPip} title="Restore">↗</button>
+                <button className="pip-btn-ctrl" onClick={exitPip} title="Restore" aria-label="Restore player"><Icon name="expand" size={14} /></button>
                 <button className="pip-btn-ctrl pip-btn-close"
-                  onClick={() => { exitPip(); setPlayerReady(false); }} title="Close">✕</button>
+                  onClick={() => { exitPip(); setPlayerReady(false); }} title="Close" aria-label="Close player"><Icon name="close" size={14} /></button>
               </div>
             </div>
           )}
@@ -514,7 +515,7 @@ export default function Watch() {
             <div className="player-overlay"
               style={backdropUrl ? { backgroundImage: `url(${backdropUrl})` } : {}}>
               <div className="player-overlay-inner">
-                <button className="play-btn" onClick={() => setPlayerReady(true)}>▶ Play</button>
+                <button className="play-btn" onClick={() => setPlayerReady(true)} aria-label="Play"><Icon name="play" size={34} /></button>
                 <p>{nowPlaying}</p>
               </div>
             </div>
@@ -551,7 +552,7 @@ export default function Watch() {
       {/* ── Source bar ── */}
       <div className="source-bar">
         <span className="source-bar-label" title={playerReady ? nowPlaying : title}>
-          {playerReady ? `▶ ${nowPlaying}` : title}
+          {playerReady && <Icon name="play" size={12} />} {playerReady ? nowPlaying : title}
         </span>
         <div className="source-bar-right">
           {/* Ad Shield toggle */}
@@ -562,7 +563,7 @@ export default function Watch() {
               ? 'Ad Shield ON — click to disable (e.g. to switch tabs freely)'
               : 'Ad Shield OFF — click to enable popup ad blocking'}
           >
-            {adShield ? '🛡 Ad Shield' : '🛡 Shield Off'}
+            <Icon name="shield" size={14} /> {adShield ? 'Ad shield on' : 'Ad shield off'}
           </button>
 
           <div className="source-switcher" ref={sourceSwitcherRef}>
@@ -584,7 +585,7 @@ export default function Watch() {
       {/* ── Drama sites popup bar (TV only) ── */}
       {mediaType === 'tv' && media && (
         <div className="drama-popup-bar">
-          <span className="drama-popup-label">🌏 Not on any source? Open in popup window:</span>
+          <span className="drama-popup-label"><Icon name="globe" size={15} /> Not on any source? Open it in a popup window:</span>
           <div className="drama-popup-btns">
             {DRAMA_SITES.map((site) => (
               <button key={site.id} className={`drama-popup-btn ${site.id}`} onClick={() => openDramaPopup(site)}>
@@ -599,12 +600,12 @@ export default function Watch() {
       {sourceTimeout && pipMode === 'none' && (
         <div className="source-timeout-banner">
           <div className="stb-row">
-            <span className="stb-icon">⚠</span>
-            <span className="stb-msg">This source doesn't have the title. Try another or use the links below.</span>
+            <span className="stb-icon"><Icon name="alert" size={18} /></span>
+            <span className="stb-msg">Still nothing after 10 seconds? This source may not have it. Try another one.</span>
             <button className="stb-cycle-btn" onClick={cycleSource}>
-              Try {SOURCES[(SOURCES.findIndex((s) => s.id === source) + 1) % SOURCES.length].label} →
+              Try {SOURCES[(SOURCES.findIndex((s) => s.id === source) + 1) % SOURCES.length].label}
             </button>
-            <button className="stb-dismiss" onClick={() => setSourceTimeout(false)}>✕</button>
+            <button className="stb-dismiss" onClick={() => setSourceTimeout(false)} aria-label="Dismiss"><Icon name="close" size={14} /></button>
           </div>
         </div>
       )}
@@ -631,20 +632,20 @@ export default function Watch() {
           {media.overview && <p className="watch-overview">{media.overview}</p>}
           <div className="watch-actions">
             {!playerReady && (
-              <button className="btn-primary" onClick={() => setPlayerReady(true)}>▶ Watch Now</button>
+              <button className="btn btn-primary" onClick={() => setPlayerReady(true)}><Icon name="play" size={16} /> Watch now</button>
             )}
             {playerReady && pipMode === 'none' && (
-              <button className="btn-pip" onClick={() => enterPip(embedUrl, nowPlaying)}>
-                ⊡ {supportsDocPip ? 'Picture in Picture' : 'Mini Player'}
+              <button className="btn btn-ghost" onClick={() => enterPip(embedUrl, nowPlaying)}>
+                <Icon name="pip" size={16} /> {supportsDocPip ? 'Picture in picture' : 'Mini player'}
               </button>
             )}
             {pipMode !== 'none' && (
-              <button className="btn-pip btn-pip--active" onClick={exitPip}>
-                ⊠ Exit PiP
+              <button className="btn btn-ghost is-on" onClick={exitPip}>
+                <Icon name="close" size={16} /> Exit picture in picture
               </button>
             )}
-            <button className="btn-secondary" onClick={handleAddToWatchlist}>+ Watchlist</button>
-            <button className="btn-ghost" onClick={() => navigate(-1)}>← Back</button>
+            <button className="btn btn-glass" onClick={handleAddToWatchlist}><Icon name="plus" size={16} /> Watchlist</button>
+            <button className="btn btn-ghost" onClick={() => navigate(-1)}><Icon name="back" size={16} /> Back</button>
           </div>
         </div>
       </div>

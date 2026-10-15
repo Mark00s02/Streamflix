@@ -7,6 +7,7 @@ import MovieCard from '../components/MovieCard';
 import MediaRow from '../components/MediaRow';
 import '../styles/Anime.css';
 
+import Icon from '../components/Icon';
 const ANIME_GENRES = [
   { id: null, name: 'All Anime' },
   { id: 10759, name: 'Action & Adventure' },
@@ -162,7 +163,7 @@ export default function Anime() {
   // ── Banner backdrop (pick first popular anime with a backdrop) ──
   const bannerItem = popular.find((item) => item.backdrop_path) || null;
   const bannerStyle = bannerItem ? {
-    backgroundImage: `linear-gradient(135deg, rgba(45,27,107,0.92) 0%, rgba(74,14,120,0.82) 40%, rgba(26,10,58,0.88) 100%), url(https://image.tmdb.org/t/p/w1280${bannerItem.backdrop_path})`,
+    backgroundImage: `radial-gradient(120% 90% at 0% 0%, rgba(245,176,65,0.16), transparent 55%), linear-gradient(90deg, rgba(8,9,13,0.94) 0%, rgba(8,9,13,0.7) 45%, rgba(8,9,13,0.35) 100%), url(https://image.tmdb.org/t/p/w1280${bannerItem.backdrop_path})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center top',
   } : {};
@@ -173,10 +174,9 @@ export default function Anime() {
       <div className="anime-header" style={bannerStyle}>
         <div className="anime-header-content">
           <div className="anime-title-group">
-            <span className="anime-icon">⛩</span>
             <h1>Anime</h1>
           </div>
-          <p>Japanese animation — explore thousands of series across every genre</p>
+          <p>Japanese animation, from this season's hits to the classics.</p>
         </div>
       </div>
 
@@ -195,8 +195,8 @@ export default function Anime() {
         </div>
       ) : (
         <>
-          <MediaRow title="Popular Anime" badge="ANIME" items={popular} mediaType="anime" />
-          <MediaRow title="Top Rated" badge="TOP" items={topRated} mediaType="tv" />
+          <MediaRow title="Popular anime" items={popular} mediaType="anime" seeAllTo="/browse/anime" />
+          <MediaRow title="Top rated series" items={topRated} mediaType="tv" seeAllTo="/browse/top-rated-tv" />
         </>
       )}
 
@@ -214,7 +214,7 @@ export default function Anime() {
             <button type="submit" className="anime-search-btn">Search</button>
             {searchQuery && (
               <button type="button" className="anime-search-clear" onClick={clearSearch}>
-                ✕ Clear
+                <Icon name="close" size={14} /> Clear
               </button>
             )}
           </form>
@@ -239,9 +239,9 @@ export default function Anime() {
             )}
             {searchResults.length > 0 && (
               <div className="pagination">
-                <button onClick={() => setSearchPage((p) => Math.max(1, p - 1))} disabled={searchPage === 1 || searchLoading}>← Prev</button>
+                <button onClick={() => setSearchPage((p) => Math.max(1, p - 1))} disabled={searchPage === 1 || searchLoading}><Icon name="left" size={16} /> Previous</button>
                 <span>Page {searchPage}{searchTotal ? ` of ${Math.min(searchTotal, 500)}` : ''}</span>
-                <button onClick={() => setSearchPage((p) => Math.min(searchTotal || 500, p + 1))} disabled={searchPage >= (searchTotal || 500) || searchLoading}>Next →</button>
+                <button onClick={() => setSearchPage((p) => Math.min(searchTotal || 500, p + 1))} disabled={searchPage >= (searchTotal || 500) || searchLoading}>Next <Icon name="right" size={16} /></button>
               </div>
             )}
           </>
@@ -282,11 +282,11 @@ export default function Anime() {
 
             <div className="pagination">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || browseLoading}>
-                ← Prev
+                <Icon name="left" size={16} /> Previous
               </button>
               <span>Page {page}{totalPages ? ` of ${maxPage}` : ''}</span>
               <button onClick={() => setPage((p) => Math.min(maxPage, p + 1))} disabled={page >= maxPage || browseLoading}>
-                Next →
+                Next <Icon name="right" size={16} />
               </button>
             </div>
           </>

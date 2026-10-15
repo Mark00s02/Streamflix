@@ -10,7 +10,7 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 router.get('/trending', async (req, res) => {
   try {
     const response = await axios.get(`${TMDB_BASE_URL}/trending/movie/week`, {
-      params: { api_key: TMDB_API_KEY },
+      params: { api_key: TMDB_API_KEY, page: parseInt(req.query.page) || 1 },
     });
     res.json(response.data.results);
   } catch (error) {
@@ -36,7 +36,7 @@ router.get('/genres', async (req, res) => {
 router.get('/now-playing', async (req, res) => {
   try {
     const response = await axios.get(`${TMDB_BASE_URL}/movie/now_playing`, {
-      params: { api_key: TMDB_API_KEY, page: 1 },
+      params: { api_key: TMDB_API_KEY, page: parseInt(req.query.page) || 1 },
     });
     res.json(response.data.results);
   } catch (error) {

@@ -1,97 +1,102 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Icon from './Icon';
 import '../styles/HeroBanner.css';
 
-function ScoreRing({ score }) {
-  if (!score || score === '0.0') return null;
-  const n = parseFloat(score);
-  const pct = Math.round(n * 10);
-  const cls = n >= 7 ? 'ring-green' : n >= 5 ? 'ring-yellow' : 'ring-red';
-  const circumference = 2 * Math.PI * 18; // r=18
-  const offset = circumference - (pct / 100) * circumference;
+const ROTATE_MS = 9000;
 
-  return (
-    <div className={`score-ring ${cls}`} title={`TMDB Score: ${score}/10`}>
-      <svg viewBox="0 0 44 44" width="54" height="54">
-        <circle cx="22" cy="22" r="18" stroke="rgba(255,255,255,0.15)" strokeWidth="3" fill="none" />
-        <circle
-          cx="22" cy="22" r="18"
-          stroke="currentColor"
-          strokeWidth="3"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform="rotate(-90 22 22)"
-        />
-      </svg>
-      <div className="ring-text">
-        <span className="ring-pct">{pct}<sup>%</sup></span>
-      </div>
-      <div className="ring-label">TMDB</div>
-    </div>
-  );
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
-export default function HeroBanner({ movie }) {
+// Full-bleed featured title. With several `items`, a picker along the bottom
+// lets the viewer switch, and it advances on its own unless motion is reduced.
+export default function HeroBanner({ items = [], onAddToWatchlist }) {
   const navigate = useNavigate();
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const timer = useRef(null);
+  const featured = items.filter((m) => m.backdrop_path).slice(0, 5);
+  const movie = featured[index] || featured[0];
+
+  useEffect(() => {
+    if (featured.length < 2 || paused || prefersReducedMotion()) return;
+    timer.current = setTimeout(() => setIndex((i) => (i + 1) % featured.length), ROTATE_MS);
+    return () => clearTimeout(timer.current);
+  }, [index, paused, featured.length]);
+
   if (!movie) return null;
 
-  const backdropUrl = movie.backdrop_path
-    ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-    : null;
-
-  const score = (movie.rating ?? movie.vote_average)?.toFixed(1);
-  const year = (movie.release_date || movie.first_air_date)?.substring(0, 4);
   const title = movie.title || movie.name;
-  const overview = movie.overview?.substring(0, 220);
-  const genreNames = movie.genre_ids
-    ? []
-    : movie.genres?.slice(0, 3).map((g) => g.name) || [];
+  const year = (movie.release_date || movie.first_air_date)?.substring(0, 4);
+  const score = movie.vote_average ? movie.vote_average.toFixed(1) : null;
+  const overview = movie.overview && movie.overview.length > 240
+    ? `${movie.overview.slice(0, 240).trimEnd()}…`
+    : movie.overview;
 
-  const handleWatch = () => navigate(`/watch/${movie.id}`);
-  const handleMore = () => navigate(`/watch/${movie.id}`);
+  const watch = () => navigate(`/watch/${movie.id}`);
 
   return (
-    <div
-      className="hero-banner"
-      style={backdropUrl ? { backgroundImage: `url(${backdropUrl})` } : {}}
+    <section
+      className="hero"
+      aria-roledescription="carousel"
+      aria-label="Featured this week"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
     >
-      <div className="hero-gradient" />
-      <div className="hero-content">
-        <div className="hero-badges">
-          <span className="hero-badge trending-badge">🔥 Trending</span>
-          {year && <span className="hero-badge year-badge">{year}</span>}
-        </div>
+      {featured.map((m, i) => (
+        <div
+          key={m.id}
+          className={`hero-backdrop ${i === index ? 'is-active' : ''}`}
+          style={{ backgroundImage: `url(https://image.tmdb.org/t/p/original${m.backdrop_path})` }}
+          aria-hidden="true"
+        />
+      ))}
+      <div className="hero-shade" aria-hidden="true" />
 
+      <div className="hero-content" key={movie.id}>
+        <p className="hero-kicker">
+          <Icon name="flame" size={16} /> Trending this week
+        </p>
         <h1 className="hero-title">{title}</h1>
-
-        {genreNames.length > 0 && (
-          <div className="hero-genres">
-            {genreNames.map((g) => (
-              <span key={g} className="hero-genre-pill">{g}</span>
-            ))}
-          </div>
-        )}
-
-        {overview && <p className="hero-overview">{overview}{movie.overview?.length > 220 ? '…' : ''}</p>}
-
-        <div className="hero-meta">
-          <ScoreRing score={score} />
-          {movie.vote_count > 0 && (
-            <span className="hero-votes">{movie.vote_count.toLocaleString()} ratings</span>
+        <div className="hero-facts">
+          {score && <span className="hero-score"><Icon name="star" size={14} /> {score}</span>}
+          {year && <span>{year}</span>}
+          {movie.vote_count > 0 && <span>{movie.vote_count.toLocaleString()} ratings</span>}
+        </div>
+        {overview && <p className="hero-overview">{overview}</p>}
+        <div className="hero-actions">
+          <button className="btn btn-primary btn-lg" onClick={watch}>
+            <Icon name="play" size={18} /> Watch now
+          </button>
+          {onAddToWatchlist && (
+            <button className="btn btn-glass btn-lg" onClick={() => onAddToWatchlist(movie)}>
+              <Icon name="plus" size={18} /> Watchlist
+            </button>
           )}
         </div>
-
-        <div className="hero-actions">
-          <button className="hero-play-btn" onClick={handleWatch}>
-            ▶ Watch Now
-          </button>
-          <button className="hero-info-btn" onClick={handleMore}>
-            ℹ More Info
-          </button>
-        </div>
       </div>
-    </div>
+
+      {featured.length > 1 && (
+        <div className="hero-picker" role="tablist" aria-label="Featured titles">
+          {featured.map((m, i) => (
+            <button
+              key={m.id}
+              role="tab"
+              aria-selected={i === index}
+              className={`hero-pick ${i === index ? 'is-active' : ''}`}
+              onClick={() => setIndex(i)}
+              title={m.title || m.name}
+            >
+              <img src={`https://image.tmdb.org/t/p/w300${m.backdrop_path}`} alt="" loading="lazy" />
+              <span className="hero-pick-title">{m.title || m.name}</span>
+              {i === index && !paused && <span className="hero-pick-progress" style={{ animationDuration: `${ROTATE_MS}ms` }} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

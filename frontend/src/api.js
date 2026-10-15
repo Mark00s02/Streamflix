@@ -17,8 +17,8 @@ api.interceptors.request.use((config) => {
 
 export const movieService = {
   getPopular: (page = 1) => api.get('/movies/popular', { params: { page } }),
-  getTrending: () => api.get('/movies/trending'),
-  getNowPlaying: () => api.get('/movies/now-playing'),
+  getTrending: (page = 1) => api.get('/movies/trending', { params: { page } }),
+  getNowPlaying: (page = 1) => api.get('/movies/now-playing', { params: { page } }),
   getTopRated: (page = 1) => api.get('/movies/top-rated', { params: { page } }),
   getGenres: () => api.get('/movies/genres'),
   discover: (page = 1, genreId = null) =>
@@ -28,7 +28,7 @@ export const movieService = {
 };
 
 export const tvService = {
-  getTrending: () => api.get('/tv/trending'),
+  getTrending: (page = 1) => api.get('/tv/trending', { params: { page } }),
   getAnime: (page = 1) => api.get('/tv/anime', { params: { page } }),
   getPopular: (page = 1) => api.get('/tv/popular', { params: { page } }),
   getTopRated: (page = 1) => api.get('/tv/top-rated', { params: { page } }),
@@ -49,9 +49,9 @@ export const authService = {
 export const asianDramaService = {
   browse:    (country = 'all', type = 'all', page = 1) =>
     api.get('/asiandrama/browse', { params: { country, type, page } }),
-  trending:  (country)         => api.get(`/asiandrama/trending/${country}`),
-  trendingBL:(country = null)  => api.get('/asiandrama/trending/bl',  { params: country ? { country } : {} }),
-  trendingGL:(country = null)  => api.get('/asiandrama/trending/gl',  { params: country ? { country } : {} }),
+  trending:  (country, page = 1)        => api.get(`/asiandrama/trending/${country}`, { params: { page } }),
+  trendingBL:(country = null, page = 1) => api.get('/asiandrama/trending/bl', { params: { page, ...(country ? { country } : {}) } }),
+  trendingGL:(country = null, page = 1) => api.get('/asiandrama/trending/gl', { params: { page, ...(country ? { country } : {}) } }),
   search:    (query, page = 1) => api.get('/asiandrama/search', { params: { q: query, page } }),
 };
 

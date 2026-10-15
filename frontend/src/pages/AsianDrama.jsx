@@ -7,15 +7,16 @@ import MediaRow from '../components/MediaRow';
 import MovieCard from '../components/MovieCard';
 import '../styles/AsianDrama.css';
 
+import Icon from '../components/Icon';
 const COUNTRIES = [
-  { id: 'all',        label: 'All',        flag: null   },
-  { id: 'korean',     label: 'Korean',     flag: '🇰🇷'  },
-  { id: 'thai',       label: 'Thai',       flag: '🇹🇭'  },
-  { id: 'chinese',    label: 'Chinese',    flag: '🇨🇳'  },
-  { id: 'taiwanese',  label: 'Taiwanese',  flag: '🇹🇼'  },
-  { id: 'japanese',   label: 'Japanese',   flag: '🇯🇵'  },
-  { id: 'vietnamese', label: 'Vietnamese', flag: '🇻🇳'  },
-  { id: 'filipino',   label: 'Filipino',   flag: '🇵🇭'  },
+  { id: 'all',        label: 'All' },
+  { id: 'korean',     label: 'Korean' },
+  { id: 'thai',       label: 'Thai' },
+  { id: 'chinese',    label: 'Chinese' },
+  { id: 'taiwanese',  label: 'Taiwanese' },
+  { id: 'japanese',   label: 'Japanese' },
+  { id: 'vietnamese', label: 'Vietnamese' },
+  { id: 'filipino',   label: 'Filipino' },
 ];
 
 const TYPES = [
@@ -28,15 +29,15 @@ const TYPES = [
 
 // Featured rows shown on the default "All" view
 const FEATURED_ROWS = [
-  { key: 'korean',    label: 'Trending K-Drama',    fetch: (s) => s.trending('korean')    },
-  { key: 'japanese',  label: 'Trending J-Drama',    fetch: (s) => s.trending('japanese')  },
-  { key: 'chinese',   label: 'Trending C-Drama',    fetch: (s) => s.trending('chinese')   },
-  { key: 'taiwanese', label: 'Trending TW-Drama',   fetch: (s) => s.trending('taiwanese') },
-  { key: 'bl',        label: 'BL / Boys Love',      fetch: (s) => s.trendingBL(),          badge: 'BL' },
-  { key: 'gl',        label: 'GL / Girls Love',     fetch: (s) => s.trendingGL(),          badge: 'GL' },
-  { key: 'thai',      label: 'Trending Thai Drama', fetch: (s) => s.trending('thai')      },
-  { key: 'filipino',  label: 'Trending Filipino',   fetch: (s) => s.trending('filipino')  },
-  { key: 'vietnamese',label: 'Trending Vietnamese', fetch: (s) => s.trending('vietnamese')},
+  { key: 'korean',    label: 'Trending K-drama',         fetch: (s) => s.trending('korean'),    seeAll: 'kdrama' },
+  { key: 'japanese',  label: 'Trending J-drama',         fetch: (s) => s.trending('japanese'),  seeAll: 'jdrama' },
+  { key: 'chinese',   label: 'Trending C-drama',         fetch: (s) => s.trending('chinese'),   seeAll: 'cdrama' },
+  { key: 'taiwanese', label: 'Trending Taiwanese drama', fetch: (s) => s.trending('taiwanese'), seeAll: 'twdrama' },
+  { key: 'bl',        label: 'BL: boys love',            fetch: (s) => s.trendingBL(),          seeAll: 'bl' },
+  { key: 'gl',        label: 'GL: girls love',           fetch: (s) => s.trendingGL(),          seeAll: 'gl' },
+  { key: 'thai',      label: 'Trending Thai drama',      fetch: (s) => s.trending('thai'),      seeAll: 'thaidrama' },
+  { key: 'filipino',  label: 'Trending Filipino drama',  fetch: (s) => s.trending('filipino'),  seeAll: 'pinoydrama' },
+  { key: 'vietnamese',label: 'Trending Vietnamese drama',fetch: (s) => s.trending('vietnamese'),seeAll: 'vndrama' },
 ];
 
 export default function AsianDrama() {
@@ -167,7 +168,7 @@ export default function AsianDrama() {
   }, [rows]);
 
   const bannerStyle = bannerItem ? {
-    backgroundImage: `linear-gradient(135deg, rgba(26,11,46,0.92) 0%, rgba(61,12,62,0.82) 35%, rgba(107,26,46,0.75) 65%, rgba(26,11,46,0.88) 100%), url(https://image.tmdb.org/t/p/w1280${bannerItem.backdrop_path})`,
+    backgroundImage: `radial-gradient(120% 90% at 0% 0%, rgba(245,176,65,0.16), transparent 55%), linear-gradient(90deg, rgba(8,9,13,0.94) 0%, rgba(8,9,13,0.7) 45%, rgba(8,9,13,0.35) 100%), url(https://image.tmdb.org/t/p/w1280${bannerItem.backdrop_path})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center top',
   } : {};
@@ -180,14 +181,8 @@ export default function AsianDrama() {
         <div className="ad-header-content">
           <h1 className="ad-header-title">Asian Drama</h1>
           <p className="ad-header-sub">
-            Korean, Thai, Chinese, Taiwanese, Japanese, Vietnamese &amp; Filipino dramas —
-            Drama, Comedy, BL &amp; GL
+            Dramas from Korea, Japan, China, Taiwan, Thailand, the Philippines and Vietnam.
           </p>
-          <div className="ad-header-tags">
-            {['K-Drama', 'J-Drama', 'C-Drama', 'Thai', 'Taiwanese', 'Filipino', 'Vietnamese', 'BL', 'GL', 'Romance', 'Comedy'].map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -204,7 +199,7 @@ export default function AsianDrama() {
           <button type="submit" className="ad-search-btn">Search</button>
           {searchQuery && (
             <button type="button" className="ad-search-clear" onClick={clearSearch}>
-              ✕ Clear
+              <Icon name="close" size={14} /> Clear
             </button>
           )}
         </form>
@@ -219,10 +214,9 @@ export default function AsianDrama() {
             {COUNTRIES.map((c) => (
               <button
                 key={c.id}
-                className={`ad-country-tab ${activeCountry === c.id ? 'active' : ''}`}
+                className={`chip ${activeCountry === c.id ? 'active' : ''}`}
                 onClick={() => handleCountryChange(c.id)}
               >
-                {c.flag && <span className="ad-flag">{c.flag}</span>}
                 {c.label}
               </button>
             ))}
@@ -236,7 +230,7 @@ export default function AsianDrama() {
             {TYPES.map((t) => (
               <button
                 key={t.id}
-                className={`ad-type-pill ${activeType === t.id ? 'active' : ''} ${t.accent ? `ad-type-pill--${t.accent}` : ''}`}
+                className={`chip ${activeType === t.id ? 'active' : ''}`}
                 onClick={() => handleTypeChange(t.id)}
               >
                 {t.label}
@@ -251,7 +245,6 @@ export default function AsianDrama() {
         <div className="ad-filter-summary">
           Showing{' '}
           <strong>
-            {activeCountryObj?.flag && `${activeCountryObj.flag} `}
             {activeCountryObj?.id !== 'all' ? activeCountryObj?.label : 'All'}{' '}
             {activeTypeObj?.id !== 'all' ? activeTypeObj?.label : 'Dramas'}
           </strong>
@@ -275,7 +268,7 @@ export default function AsianDrama() {
           <>
             {FEATURED_ROWS.map((r) =>
               (rows[r.key] || []).length > 0 ? (
-                <MediaRow key={r.key} title={r.label} items={rows[r.key]} mediaType="tv" badge={r.badge} />
+                <MediaRow key={r.key} title={r.label} items={rows[r.key]} mediaType="tv" seeAllTo={`/browse/${r.seeAll}`} />
               ) : null
             )}
           </>
@@ -302,9 +295,9 @@ export default function AsianDrama() {
               </div>
               {searchResults.length > 0 && (
                 <div className="pagination">
-                  <button onClick={() => setSearchPage((p) => Math.max(1, p - 1))} disabled={searchPage === 1 || searchLoading}>← Prev</button>
+                  <button onClick={() => setSearchPage((p) => Math.max(1, p - 1))} disabled={searchPage === 1 || searchLoading}><Icon name="left" size={16} /> Previous</button>
                   <span>Page {searchPage}{searchTotal ? ` of ${Math.min(searchTotal, 500)}` : ''}</span>
-                  <button onClick={() => setSearchPage((p) => Math.min(searchTotal || 500, p + 1))} disabled={searchPage >= (searchTotal || 500) || searchLoading}>Next →</button>
+                  <button onClick={() => setSearchPage((p) => Math.min(searchTotal || 500, p + 1))} disabled={searchPage >= (searchTotal || 500) || searchLoading}>Next <Icon name="right" size={16} /></button>
                 </div>
               )}
             </>
@@ -339,11 +332,11 @@ export default function AsianDrama() {
               {browseList.length > 0 && (
                 <div className="pagination">
                   <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || browseLoading}>
-                    ← Prev
+                    <Icon name="left" size={16} /> Previous
                   </button>
                   <span>Page {page}{totalPages ? ` of ${maxPage}` : ''}</span>
                   <button onClick={() => setPage((p) => Math.min(maxPage, p + 1))} disabled={page >= maxPage || browseLoading}>
-                    Next →
+                    Next <Icon name="right" size={16} />
                   </button>
                 </div>
               )}

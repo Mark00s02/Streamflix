@@ -1,300 +1,240 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { dailymotionService } from '../api';
-import { useToast } from '../context/ToastContext';
+import { useParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import Hls from 'hls.js';
+import Icon from '../components/Icon';
+import {
+  providerById, getDrama, getEpisodeStream, getDailymotionVideo, SourceUnavailableError,
+} from '../shortDrama';
 import '../styles/ShortDramaWatch.css';
 
-function formatDuration(seconds) {
-  if (!seconds) return null;
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m ${s}s`;
-}
+// Plays an HLS (.m3u8) or MP4 stream in a <video>, using hls.js where the
+// browser has no native HLS support.
+function VerticalPlayer({ src, subtitle, onEnded, onError }) {
+  const videoRef = useRef(null);
+  const [needsTap, setNeedsTap] = useState(false);
 
-function formatViews(n) {
-  if (!n) return null;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M views`;
-  if (n >= 1_000)     return `${Math.round(n / 1_000)}K views`;
-  return `${n} views`;
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+    setNeedsTap(false);
+    let hls;
+
+    const tryPlay = () => video.play().catch(() => setNeedsTap(true));
+
+    if (/\.m3u8/i.test(src) && !video.canPlayType('application/vnd.apple.mpegurl') && Hls.isSupported()) {
+      hls = new Hls({ enableWorker: true });
+      hls.loadSource(src);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, tryPlay);
+      hls.on(Hls.Events.ERROR, (_e, data) => { if (data.fatal) onError?.('This stream could not be loaded.'); });
+    } else {
+      video.src = src;
+      video.addEventListener('loadedmetadata', tryPlay, { once: true });
+    }
+    return () => {
+      if (hls) hls.destroy();
+      video.removeAttribute('src');
+      video.load();
+    };
+  }, [src, onError]);
+
+  return (
+    <div className="vp">
+      <video
+        ref={videoRef}
+        className="vp-video"
+        controls
+        playsInline
+        onEnded={onEnded}
+        onError={() => onError?.('This stream could not be played.')}
+      >
+        {subtitle && <track kind="subtitles" src={subtitle} srcLang="en" label="English" default />}
+      </video>
+      {needsTap && (
+        <button className="vp-tap" onClick={() => { videoRef.current?.play(); setNeedsTap(false); }}>
+          <span className="vp-tap-icon"><Icon name="play" size={30} /></span>
+          Play episode
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function ShortDramaWatch() {
-  const { id }       = useParams();
-  const location     = useLocation();
-  const navigate     = useNavigate();
-  const { addToast } = useToast();
+  const { provider, id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const epNumber = Number(searchParams.get('ep')) || 1;
+  const isDm = provider === 'dailymotion';
+  const providerInfo = providerById(provider);
 
-  const [video,       setVideo]       = useState(location.state?.video || null);
-  const [loading,     setLoading]     = useState(!location.state?.video);
-  const [playerReady, setPlayerReady] = useState(false);
-  const [adShield,    setAdShield]    = useState(true);
-  const [pipMode,     setPipMode]     = useState('none'); // 'none' | 'document' | 'css'
+  const [drama, setDrama] = useState(location.state?.drama || null);
+  const [episodes, setEpisodes] = useState([]);
+  const [stream, setStream] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [streamLoading, setStreamLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [autoNext, setAutoNext] = useState(true);
 
-  const docPipWin = useRef(null);
-  const cssPipRef = useRef(null);
-  const dragData  = useRef({ active: false });
-
-  const embedUrl = `https://www.dailymotion.com/embed/video/${id}?autoplay=1&queue-autoplay-next=0&queue-enable=0&sharing-enable=0`;
-
-  // ── Fetch video details if not passed via state ──
+  // Drama details + episode list
   useEffect(() => {
-    if (video) return;
+    let cancelled = false;
     setLoading(true);
-    dailymotionService.getVideo(id)
-      .then((res) => setVideo(res.data))
-      .catch(() => { addToast('Failed to load video', 'error'); navigate('/shortdramas'); })
-      .finally(() => setLoading(false));
-  }, [id]);
+    setError(null);
+    const load = isDm ? getDailymotionVideo(id) : getDrama(provider, id);
+    load
+      .then((d) => {
+        if (cancelled) return;
+        setDrama((prev) => ({ ...prev, ...d, cover: d.cover || prev?.cover, title: d.title || prev?.title }));
+        setEpisodes(d.episodes || []);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof SourceUnavailableError
+          ? `${err.message} Dailymotion short dramas still work.`
+          : err.message || 'Could not load this drama.');
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [provider, id, isDm]);
 
-  // ── Ad Shield ──
+  // Current episode stream
+  const currentEpisode = episodes.find((e) => e.number === epNumber) || episodes[0];
   useEffect(() => {
-    if (!playerReady || !adShield) return;
+    if (isDm || !currentEpisode) return;
+    let cancelled = false;
+    setStream(null);
+    setStreamLoading(true);
+    setError(null);
+    getEpisodeStream(provider, id, currentEpisode)
+      .then((s) => { if (!cancelled) setStream(s); })
+      .catch((err) => { if (!cancelled) setError(err.message || 'Could not load this episode.'); })
+      .finally(() => { if (!cancelled) setStreamLoading(false); });
+    return () => { cancelled = true; };
+  }, [provider, id, isDm, currentEpisode]);
 
-    let cooldown    = false;
-    let lastBlurAt  = 0;
+  const goToEpisode = useCallback((n) => {
+    setSearchParams({ ep: String(n) }, { replace: true });
+  }, [setSearchParams]);
 
-    const block = () => {
-      window.focus();
-      if (!cooldown) {
-        cooldown = true;
-        addToast('🛡 Ad popup blocked — pulled you back', 'warning');
-        setTimeout(() => { cooldown = false; }, 3000);
-      }
+  const lastEpisode = episodes.length ? episodes[episodes.length - 1].number : 1;
+  const hasPrev = epNumber > (episodes[0]?.number || 1);
+  const hasNext = epNumber < lastEpisode;
+
+  const handleEnded = useCallback(() => {
+    if (autoNext && hasNext) goToEpisode(epNumber + 1);
+  }, [autoNext, hasNext, epNumber, goToEpisode]);
+
+  const handleStreamError = useCallback((msg) => setError(msg), []);
+
+  // Arrow keys: up/left = previous episode, down/right = next
+  useEffect(() => {
+    if (isDm) return;
+    const onKey = (e) => {
+      if (e.target.closest('input, textarea, video')) return;
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowRight') && hasNext) goToEpisode(epNumber + 1);
+      if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && hasPrev) goToEpisode(epNumber - 1);
     };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isDm, hasNext, hasPrev, epNumber, goToEpisode]);
 
-    const onBlur = () => {
-      lastBlurAt = Date.now();
-      setTimeout(() => {
-        if (document.hasFocus()) return;
-        block();
-      }, 80);
-    };
-
-    const onVisibilityChange = () => {
-      if (document.hidden && Date.now() - lastBlurAt < 400) block();
-    };
-
-    window.addEventListener('blur', onBlur);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      window.removeEventListener('blur', onBlur);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, [playerReady, adShield, addToast]);
-
-  // ── CSS pip drag ──
-  const onDragMove = useCallback((e) => {
-    if (!dragData.current.active || !cssPipRef.current) return;
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-    const newL = Math.max(0, Math.min(window.innerWidth  - cssPipRef.current.offsetWidth,  dragData.current.origLeft + cx - dragData.current.startX));
-    const newT = Math.max(0, Math.min(window.innerHeight - cssPipRef.current.offsetHeight, dragData.current.origTop  + cy - dragData.current.startY));
-    cssPipRef.current.style.left   = newL + 'px';
-    cssPipRef.current.style.top    = newT + 'px';
-    cssPipRef.current.style.right  = 'auto';
-    cssPipRef.current.style.bottom = 'auto';
-  }, []);
-
-  const onDragEnd = useCallback(() => {
-    dragData.current.active = false;
-    window.removeEventListener('mousemove', onDragMove);
-    window.removeEventListener('mouseup', onDragEnd);
-  }, [onDragMove]);
-
-  const onDragStart = useCallback((e) => {
-    if (!cssPipRef.current) return;
-    e.preventDefault();
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-    const rect = cssPipRef.current.getBoundingClientRect();
-    dragData.current = { active: true, startX: cx, startY: cy, origLeft: rect.left, origTop: rect.top };
-    cssPipRef.current.style.left   = rect.left + 'px';
-    cssPipRef.current.style.top    = rect.top  + 'px';
-    cssPipRef.current.style.right  = 'auto';
-    cssPipRef.current.style.bottom = 'auto';
-    window.addEventListener('mousemove', onDragMove);
-    window.addEventListener('mouseup', onDragEnd);
-  }, [onDragMove, onDragEnd]);
-
-  // ── PiP ──
-  const enterPip = useCallback(async () => {
-    if (!playerReady) setPlayerReady(true);
-
-    if (window.documentPictureInPicture) {
-      try {
-        const pipWin = await window.documentPictureInPicture.requestWindow({ width: 480, height: 270 });
-        const style = pipWin.document.createElement('style');
-        style.textContent = `*{margin:0;padding:0;box-sizing:border-box}body{background:#000;width:100vw;height:100vh;overflow:hidden}iframe{width:100%;height:100%;border:none}`;
-        pipWin.document.head.appendChild(style);
-        const iframe = pipWin.document.createElement('iframe');
-        iframe.src = embedUrl;
-        iframe.allowFullscreen = true;
-        iframe.setAttribute('allow', 'autoplay; fullscreen');
-        pipWin.document.body.appendChild(iframe);
-        docPipWin.current = pipWin;
-        setPipMode('document');
-        pipWin.addEventListener('pagehide', () => { docPipWin.current = null; setPipMode('none'); });
-        return;
-      } catch {}
-    }
-
-    const pw = 480, ph = 280;
-    const popup = window.open('about:blank', 'sdrama_pip',
-      `width=${pw},height=${ph},left=${window.screen.width - pw - 16},top=${window.screen.height - ph - 60},resizable=yes,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`);
-
-    if (popup && !popup.closed) {
-      popup.document.open();
-      popup.document.write(`<!DOCTYPE html><html><head>
-        <title>▶ StreamFlix PiP</title>
-        <style>*{margin:0;padding:0;box-sizing:border-box}html,body{background:#000;width:100%;height:100%;overflow:hidden}
-        #bar{position:fixed;top:0;left:0;right:0;height:28px;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:space-between;padding:0 8px;font:600 11px/1 "Segoe UI",sans-serif;color:#aaa;z-index:9}
-        iframe{position:fixed;top:28px;left:0;right:0;bottom:0;width:100%;height:calc(100% - 28px);border:none}</style>
-      </head><body>
-        <div id="bar"><span>▶ ${(video?.title || 'Short Drama').replace(/"/g, '&quot;')}</span><span style="color:#ff507a;font-size:10px">PiP</span></div>
-        <iframe src="${embedUrl}" allowfullscreen allow="autoplay; fullscreen"></iframe>
-      </body></html>`);
-      popup.document.close();
-      docPipWin.current = popup;
-      setPipMode('document');
-      const poll = setInterval(() => {
-        if (!popup || popup.closed) { clearInterval(poll); docPipWin.current = null; setPipMode('none'); }
-      }, 600);
-      return;
-    }
-
-    addToast('Allow popups for this site to use PiP', 'info');
-    setPipMode('css');
-  }, [playerReady, embedUrl, video]);
-
-  const exitPip = useCallback(() => {
-    if (pipMode === 'document' && docPipWin.current) {
-      docPipWin.current.close();
-      docPipWin.current = null;
-    }
-    if (cssPipRef.current) cssPipRef.current.style.cssText = '';
-    setPipMode('none');
-  }, [pipMode]);
-
-  useEffect(() => () => { docPipWin.current?.close(); }, []);
-
-  if (loading) return (
-    <div className="sdwatch-loading">
-      <div className="sdwatch-skeleton-player" />
-      <div className="sdwatch-skeleton-info" />
-    </div>
-  );
-
-  if (!video) return null;
-
-  const supportsDocPip = typeof window !== 'undefined' && !!window.documentPictureInPicture;
+  const title = drama?.title || 'Short drama';
+  const sourceLabel = isDm ? 'Dailymotion' : providerInfo?.label;
 
   return (
-    <div className="sdwatch-page">
+    <div className="sdw-page">
+      <button className="btn btn-ghost sdw-back" onClick={() => navigate('/shortdramas')}>
+        <Icon name="back" size={18} /> All short dramas
+      </button>
 
-      {pipMode === 'document' && (
-        <div className="sdwatch-pip-placeholder">
-          <div className="sdwatch-pip-inner">
-            <span>⊡</span>
-            <p>Playing in a separate window</p>
-            <p className="sdwatch-pip-sub">{video.title}</p>
-            <button onClick={exitPip}>Close PiP Window</button>
-          </div>
-        </div>
-      )}
-
-      {pipMode === 'css' && <div className="sdwatch-pip-spacer" />}
-
-      {pipMode !== 'document' && (
-        <div ref={cssPipRef} className={`sdwatch-player-wrap ${pipMode === 'css' ? 'sdwatch-player-pip' : ''}`}>
-          {pipMode === 'css' && (
-            <div className="sdwatch-pip-chrome" onMouseDown={onDragStart} onTouchStart={onDragStart}>
-              <span>▶ {video.title}</span>
-              <div>
-                <button onClick={exitPip}>↗</button>
-                <button onClick={() => { exitPip(); setPlayerReady(false); }}>✕</button>
+      <div className="sdw-layout">
+        <div className="sdw-stage">
+          {drama?.cover && <div className="sdw-stage-glow" style={{ backgroundImage: `url(${drama.cover})` }} />}
+          <div className="sdw-frame">
+            {isDm ? (
+              <iframe
+                className="vp-video"
+                src={`https://www.dailymotion.com/embed/video/${encodeURIComponent(id)}?queue-enable=false&sharing-enable=false&ui-start-screen-info=false`}
+                title={title}
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            ) : stream?.url && !error ? (
+              <VerticalPlayer src={stream.url} subtitle={stream.subtitle} onEnded={handleEnded} onError={handleStreamError} />
+            ) : (
+              <div className="sdw-frame-state">
+                {error ? (
+                  <>
+                    <Icon name="alert" size={28} />
+                    <p>{error}</p>
+                    {hasNext && <button className="btn btn-ghost" onClick={() => goToEpisode(epNumber + 1)}>Skip to episode {epNumber + 1}</button>}
+                  </>
+                ) : (loading || streamLoading) ? (
+                  <div className="spinner" aria-label="Loading" />
+                ) : null}
               </div>
+            )}
+          </div>
+          {!isDm && episodes.length > 1 && (
+            <div className="sdw-stepper">
+              <button className="btn btn-ghost" disabled={!hasPrev} onClick={() => goToEpisode(epNumber - 1)}>
+                <Icon name="left" size={18} /> Previous
+              </button>
+              <span className="sdw-stepper-count">Episode {epNumber} of {lastEpisode}</span>
+              <button className="btn btn-ghost" disabled={!hasNext} onClick={() => goToEpisode(epNumber + 1)}>
+                Next <Icon name="right" size={18} />
+              </button>
             </div>
           )}
-          {!playerReady ? (
-            <div className="sdwatch-overlay">
-              <div className="sdwatch-overlay-inner">
-                <button className="sdwatch-play-btn" onClick={() => setPlayerReady(true)}>▶ Play</button>
-                <p>{video.title}</p>
-              </div>
-            </div>
-          ) : (
+        </div>
+
+        <aside className="sdw-side">
+          <p className="sdw-source">{sourceLabel}</p>
+          <h1 className="sdw-title">{title}</h1>
+          {drama?.description && <p className="sdw-desc">{drama.description}</p>}
+
+          {!isDm && episodes.length > 0 && (
             <>
-              <iframe
-                key={id}
-                className="sdwatch-iframe"
-                src={embedUrl}
-                allowFullScreen
-                allow="autoplay; fullscreen"
-                referrerPolicy="no-referrer"
-                title={video.title}
-              />
-              {pipMode === 'none' && (
-                <button className="sdwatch-pip-btn" onClick={enterPip}
-                  title={supportsDocPip ? 'True PiP' : 'Mini Player'}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2"/>
-                    <rect x="12" y="10" width="9" height="7" rx="1" fill="currentColor" stroke="none"/>
-                  </svg>
-                  PiP
-                </button>
-              )}
+              <div className="sdw-eps-head">
+                <h2>Episodes</h2>
+                <label className="sdw-autonext">
+                  <input type="checkbox" checked={autoNext} onChange={(e) => setAutoNext(e.target.checked)} />
+                  Play next automatically
+                </label>
+              </div>
+              <div className="sdw-eps">
+                {episodes.map((ep) => (
+                  <button
+                    key={ep.number}
+                    className={`sdw-ep ${ep.number === epNumber ? 'active' : ''}`}
+                    onClick={() => goToEpisode(ep.number)}
+                    aria-current={ep.number === epNumber ? 'true' : undefined}
+                  >
+                    {ep.number}
+                  </button>
+                ))}
+              </div>
+              <p className="sdw-hint">Arrow keys move between episodes.</p>
             </>
           )}
-        </div>
-      )}
 
-      {/* Source / control bar */}
-      <div className="sdwatch-bar">
-        <span className="sdwatch-bar-title">{playerReady ? `▶ ${video.title}` : video.title}</span>
-        <div className="sdwatch-bar-right">
-          <button
-            className={`sdwatch-shield-btn ${adShield ? 'on' : 'off'}`}
-            onClick={() => setAdShield((v) => !v)}
-            title={adShield ? 'Ad Shield ON' : 'Ad Shield OFF'}
-          >
-            {adShield ? '🛡 Ad Shield' : '🛡 Shield Off'}
-          </button>
-          {playerReady && pipMode === 'none' && (
-            <button className="sdwatch-pip-bar-btn" onClick={enterPip}>⊡ PiP</button>
+          {isDm && (
+            <>
+              <a
+                className="btn btn-ghost sdw-external"
+                href={`https://www.dailymotion.com/video/${encodeURIComponent(id)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="expand" size={16} /> Open on Dailymotion
+              </a>
+              <p className="sdw-hint">Dailymotion uploads usually hold the full drama in one video. If the player stays blank, open it on Dailymotion.</p>
+            </>
           )}
-          {pipMode !== 'none' && (
-            <button className="sdwatch-pip-bar-btn active" onClick={exitPip}>⊠ Exit PiP</button>
-          )}
-        </div>
+        </aside>
       </div>
-
-      {/* Video info */}
-      <div className="sdwatch-info">
-        <div className="sdwatch-title-row">
-          <h1 className="sdwatch-title">{video.title}</h1>
-          <span className="sdwatch-badge">Short Drama</span>
-        </div>
-        <div className="sdwatch-meta">
-          {formatDuration(video.duration) && <span>{formatDuration(video.duration)}</span>}
-          {formatViews(video.views_total) && <span>{formatViews(video.views_total)}</span>}
-          {video.created_time && (
-            <span>{new Date(video.created_time * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}</span>
-          )}
-        </div>
-        {video.description && (
-          <p className="sdwatch-desc">{video.description.substring(0, 300)}{video.description.length > 300 ? '…' : ''}</p>
-        )}
-        <div className="sdwatch-actions">
-          {!playerReady && (
-            <button className="sdwatch-btn-primary" onClick={() => setPlayerReady(true)}>▶ Watch Now</button>
-          )}
-          <button className="sdwatch-btn-ghost" onClick={() => navigate(-1)}>← Back</button>
-          <button className="sdwatch-btn-ghost" onClick={() => navigate('/shortdramas')}>All Dramas</button>
-        </div>
-      </div>
-
     </div>
   );
 }

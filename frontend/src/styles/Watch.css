@@ -64,8 +64,8 @@
 }
 
 .play-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 1.2rem;
   font-weight: 700;
   padding: 1rem 2.5rem;
@@ -73,7 +73,7 @@
   border: none;
   cursor: pointer;
   transition: transform 0.15s, opacity 0.15s;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 4px 20px rgba(245, 176, 65, 0.5);
 }
 
 .play-btn:hover {
@@ -113,8 +113,8 @@
 }
 
 .stb-cycle-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   border: none;
   border-radius: 6px;
   padding: 0.4rem 0.9rem;
@@ -139,7 +139,6 @@
 }
 
 .stb-dismiss:hover { color: rgba(255, 255, 255, 0.8); }
-
 
 /* ── Info section ── */
 .watch-info {
@@ -193,14 +192,12 @@
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   align-self: center;
   flex-shrink: 0;
 }
 
 .watch-type-badge.tv { background: rgba(0, 188, 212, 0.2); color: #00bcd4; border: 1px solid rgba(0, 188, 212, 0.4); }
-.watch-type-badge.movie { background: rgba(102, 126, 234, 0.2); color: #a78bfa; border: 1px solid rgba(102, 126, 234, 0.4); }
+.watch-type-badge.movie { background: rgba(245, 176, 65, 0.2); color: var(--accent-hi); border: 1px solid rgba(245, 176, 65, 0.4); }
 
 /* ── TMDB Score badge on watch page ── */
 .watch-score-badge {
@@ -230,9 +227,7 @@
 .wsb-label {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: var(--muted);
   margin-top: 2px;
 }
 
@@ -244,8 +239,8 @@
 }
 
 .watch-meta span {
-  background: #1a1a2e;
-  border: 1px solid #2a2a4a;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
   color: #bbb;
   font-size: 0.82rem;
   padding: 3px 10px;
@@ -265,13 +260,13 @@
 }
 
 .watch-genres {
-  color: #888;
+  color: var(--muted);
   font-size: 0.88rem;
   margin-bottom: 1rem;
 }
 
 .watch-overview {
-  color: #ccc;
+  color: var(--text-soft);
   font-size: 0.95rem;
   line-height: 1.7;
   margin-bottom: 1.5rem;
@@ -284,51 +279,6 @@
   align-items: center;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  padding: 0.7rem 1.6rem;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: opacity 0.2s;
-}
-
-.btn-primary:hover {
-  opacity: 0.85;
-}
-
-.btn-secondary {
-  background: #1a1a2e;
-  border: 1px solid #3a3a6a;
-  color: #aaa;
-  padding: 0.7rem 1.4rem;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: border-color 0.2s, color 0.2s;
-}
-
-.btn-secondary:hover {
-  border-color: #667eea;
-  color: #fff;
-}
-
-.btn-ghost {
-  color: #666;
-  font-size: 0.9rem;
-  text-decoration: none;
-  padding: 0.7rem 0;
-  transition: color 0.2s;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-ghost:hover {
-  color: #aaa;
-}
-
 /* ── Document PiP active placeholder ── */
 .pip-doc-placeholder {
   width: 100%;
@@ -336,7 +286,7 @@
   background: #080816;
   border-radius: 10px;
   margin-bottom: 2rem;
-  border: 1px solid rgba(102, 126, 234, 0.25);
+  border: 1px solid rgba(245, 176, 65, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -356,22 +306,22 @@
 }
 
 .pip-doc-placeholder-inner p {
-  color: #aaa;
+  color: var(--muted);
   font-size: 0.95rem;
   font-weight: 600;
   max-width: 340px;
 }
 
 .pip-doc-sub {
-  color: #555 !important;
+  color: var(--faint) !important;
   font-size: 0.85rem !important;
   font-weight: 400 !important;
 }
 
 .pip-doc-close-btn {
-  background: rgba(102, 126, 234, 0.12);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  color: #a78bfa;
+  background: rgba(245, 176, 65, 0.12);
+  border: 1px solid rgba(245, 176, 65, 0.3);
+  color: var(--accent-hi);
   padding: 0.5rem 1.25rem;
   border-radius: 6px;
   font-size: 0.85rem;
@@ -382,8 +332,8 @@
 }
 
 .pip-doc-close-btn:hover {
-  background: rgba(102, 126, 234, 0.25);
-  color: #c4b5fd;
+  background: rgba(245, 176, 65, 0.25);
+  color: var(--accent-hi);
 }
 
 /* ── PiP placeholder ── */
@@ -393,7 +343,7 @@
   background: #0a0a1a;
   border-radius: 10px;
   margin-bottom: 2rem;
-  border: 1px dashed #1e1e3a;
+  border: 1px dashed var(--line);
 }
 
 /* ── PiP floating player ── */
@@ -407,7 +357,7 @@
   margin-bottom: 0 !important;
   z-index: 9999;
   border-radius: 12px;
-  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(245, 176, 65, 0.3);
   overflow: visible !important;
   cursor: default;
 }
@@ -420,7 +370,7 @@
   right: 0;
   height: 38px;
   background: #0f0f22;
-  border: 1px solid #2a2a4a;
+  border: 1px solid var(--line-strong);
   border-bottom: none;
   border-radius: 12px 12px 0 0;
   display: flex;
@@ -438,7 +388,7 @@
 
 .pip-now-playing {
   font-size: 0.72rem;
-  color: #aaa;
+  color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -454,7 +404,7 @@
 .pip-btn-ctrl {
   background: #1a1a3a;
   border: 1px solid #2a2a5a;
-  color: #aaa;
+  color: var(--muted);
   width: 24px;
   height: 24px;
   border-radius: 4px;
@@ -468,7 +418,7 @@
   line-height: 1;
 }
 
-.pip-btn-ctrl:hover { background: #667eea; color: #fff; border-color: #667eea; }
+.pip-btn-ctrl:hover { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .pip-btn-close:hover { background: #e53935; border-color: #e53935; }
 
 /* PiP launch button (overlay on active player) */
@@ -503,15 +453,15 @@
 }
 
 .pip-launch-btn:hover {
-  background: rgba(102, 126, 234, 0.8);
+  background: rgba(245, 176, 65, 0.8);
   color: #fff;
 }
 
 /* PiP button in watch-actions */
 .btn-pip {
-  background: rgba(102, 126, 234, 0.12);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  color: #a78bfa;
+  background: rgba(245, 176, 65, 0.12);
+  border: 1px solid rgba(245, 176, 65, 0.3);
+  color: var(--accent-hi);
   padding: 0.7rem 1.4rem;
   border-radius: 6px;
   font-weight: 600;
@@ -520,24 +470,13 @@
   transition: all 0.15s;
 }
 
-.btn-pip:hover {
-  background: rgba(102, 126, 234, 0.25);
-  color: #c4b5fd;
-}
-
-.btn-pip--active {
-  background: rgba(102, 126, 234, 0.2) !important;
-  border-color: rgba(102, 126, 234, 0.5) !important;
-  color: #c4b5fd !important;
-}
-
 /* ── Source bar ── */
 .source-bar {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  background: #12122a;
-  border: 1px solid #1e1e3a;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.6rem 1rem;
   margin-bottom: 1.5rem;
@@ -548,7 +487,7 @@
   display: block;
   align-self: stretch;
   max-width: 100%;
-  color: #aaa;
+  color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -591,13 +530,13 @@
 
 .shield-off {
   background: rgba(255,255,255,0.05);
-  border: 1px solid #2a2a4a;
-  color: #555;
+  border: 1px solid var(--line-strong);
+  color: var(--faint);
 }
 
 .shield-off:hover {
-  border-color: #667eea;
-  color: #aaa;
+  border-color: var(--accent);
+  color: var(--muted);
 }
 
 .source-switcher {
@@ -623,16 +562,16 @@
 }
 
 .source-switcher-label {
-  color: #666;
+  color: var(--faint);
   font-size: 0.8rem;
   margin-right: 0.2rem;
   flex-shrink: 0;
 }
 
 .source-btn {
-  background: #1a1a2e;
-  border: 1px solid #2a2a4a;
-  color: #888;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
   padding: 0.3rem 0.75rem;
   border-radius: 5px;
   font-size: 0.78rem;
@@ -644,14 +583,14 @@
 }
 
 .source-btn:hover {
-  border-color: #667eea;
-  color: #c4b5fd;
+  border-color: var(--accent);
+  color: var(--accent-hi);
 }
 
 .source-btn.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: var(--accent);
   border-color: transparent;
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .source-hint {
@@ -666,8 +605,8 @@
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-  background: #0d0d1f;
-  border: 1px solid rgba(255, 110, 180, 0.18);
+  background: var(--surface);
+  border: 1px solid rgba(245, 176, 65, 0.18);
   border-radius: 8px;
   padding: 0.6rem 1rem;
   margin-bottom: 1rem;
@@ -675,7 +614,7 @@
 }
 
 .drama-popup-label {
-  color: rgba(255, 200, 230, 0.6);
+  color: rgba(245, 176, 65, 0.6);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -700,7 +639,7 @@
 .drama-popup-btn:hover { opacity: 0.8; }
 
 .drama-popup-btn.dramacool { background: rgba(220,60,60,0.2);   color: #f99;  border: 1px solid rgba(220,60,60,0.35);   }
-.drama-popup-btn.kissasian { background: rgba(255,90,150,0.2);  color: #fbb;  border: 1px solid rgba(255,90,150,0.35);  }
+.drama-popup-btn.kissasian { background: rgba(245, 176, 65,0.2);  color: #fbb;  border: 1px solid rgba(245, 176, 65,0.35);  }
 .drama-popup-btn.myasiantv { background: rgba(80,160,255,0.2);  color: #9cf;  border: 1px solid rgba(80,160,255,0.35);  }
 .drama-popup-btn.kshow123  { background: rgba(100,220,120,0.2); color: #9eb;  border: 1px solid rgba(100,220,120,0.35); }
 
@@ -708,7 +647,7 @@
 .seasons-section {
   margin-top: 2.5rem;
   padding-top: 2rem;
-  border-top: 1px solid #1e1e3a;
+  border-top: 1px solid var(--line);
 }
 
 .seasons-header {
@@ -723,7 +662,7 @@
 .seasons-title {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #f0f0f0;
+  color: var(--text);
 }
 
 /* Season tab strip */
@@ -734,9 +673,9 @@
 }
 
 .season-tab {
-  background: #1a1a2e;
-  border: 1px solid #2a2a4a;
-  color: #aaa;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
   padding: 0.35rem 0.9rem;
   border-radius: 6px;
   font-size: 0.82rem;
@@ -749,14 +688,14 @@
 }
 
 .season-tab:hover {
-  border-color: #667eea;
-  color: #d0d0ff;
+  border-color: var(--accent);
+  color: var(--accent-hi);
 }
 
 .season-tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent);
   border-color: transparent;
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -767,7 +706,7 @@
 }
 
 .season-overview {
-  color: #777;
+  color: var(--faint);
   font-size: 0.88rem;
   line-height: 1.55;
   margin-bottom: 1.25rem;
@@ -782,7 +721,7 @@
 }
 
 .ep-empty {
-  color: #555;
+  color: var(--faint);
   font-size: 0.9rem;
   padding: 1.5rem 0;
   text-align: center;
@@ -792,8 +731,8 @@
 .ep-card {
   display: flex;
   gap: 1rem;
-  background: #12122a;
-  border: 1px solid #1e1e3a;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
@@ -801,18 +740,18 @@
 }
 
 .ep-card:hover {
-  border-color: #3a3a6a;
+  border-color: var(--line-strong);
   background: #18183a;
   transform: translateX(3px);
 }
 
 .ep-card--active {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.08);
+  border-color: var(--accent);
+  background: rgba(245, 176, 65, 0.08);
 }
 
 .ep-card--active:hover {
-  border-color: #764ba2;
+  border-color: var(--accent-deep);
 }
 
 /* Episode still / thumbnail */
@@ -845,7 +784,7 @@
 .ep-playing-badge {
   position: absolute;
   inset: 0;
-  background: rgba(102, 126, 234, 0.65);
+  background: rgba(245, 176, 65, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -860,7 +799,7 @@
   bottom: 5px;
   right: 6px;
   background: rgba(0,0,0,0.75);
-  color: #ccc;
+  color: var(--text-soft);
   font-size: 0.68rem;
   padding: 1px 5px;
   border-radius: 3px;
@@ -885,8 +824,8 @@
 .ep-number {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #667eea;
-  background: rgba(102, 126, 234, 0.12);
+  color: var(--accent);
+  background: rgba(245, 176, 65, 0.12);
   padding: 1px 7px;
   border-radius: 4px;
   letter-spacing: 0.04em;
@@ -900,7 +839,7 @@
 .ep-title {
   font-size: 0.92rem;
   font-weight: 600;
-  color: #e0e0e0;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -908,12 +847,12 @@
 
 .ep-airdate {
   font-size: 0.75rem;
-  color: #555;
+  color: var(--faint);
 }
 
 .ep-overview {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--muted);
   line-height: 1.45;
   margin-top: 0.1rem;
 }
@@ -928,7 +867,7 @@
 .ep-skeleton {
   height: 100px;
   border-radius: 10px;
-  background: linear-gradient(90deg, #12122a 25%, #1a1a36 50%, #12122a 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, #1a1a36 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -943,7 +882,7 @@
 .watch-skeleton-player {
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: linear-gradient(90deg, #1a1a2e 25%, #22223a 50%, #1a1a2e 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--raised) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   border-radius: 10px;
   animation: shimmer 1.5s infinite;
@@ -951,7 +890,7 @@
 
 .watch-skeleton-info {
   height: 160px;
-  background: linear-gradient(90deg, #1a1a2e 25%, #22223a 50%, #1a1a2e 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--raised) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   border-radius: 10px;
   animation: shimmer 1.5s infinite;

@@ -54,7 +54,7 @@ router.get('/browse', async (req, res) => {
 router.get('/trending/bl', async (req, res) => {
   const extra = req.query.country ? (COUNTRY_PARAMS[req.query.country] || {}) : {};
   try {
-    const r = await tmdbDiscover({ ...TYPE_PARAMS.bl, page: 1, ...extra });
+    const r = await tmdbDiscover({ ...TYPE_PARAMS.bl, page: parseInt(req.query.page) || 1, ...extra });
     res.json(r.data.results.slice(0, 20));
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch BL dramas' });
@@ -64,7 +64,7 @@ router.get('/trending/bl', async (req, res) => {
 router.get('/trending/gl', async (req, res) => {
   const extra = req.query.country ? (COUNTRY_PARAMS[req.query.country] || {}) : {};
   try {
-    const r = await tmdbDiscover({ ...TYPE_PARAMS.gl, page: 1, ...extra });
+    const r = await tmdbDiscover({ ...TYPE_PARAMS.gl, page: parseInt(req.query.page) || 1, ...extra });
     res.json(r.data.results.slice(0, 20));
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch GL dramas' });
@@ -76,7 +76,7 @@ router.get('/trending/:country', async (req, res) => {
   const cp = COUNTRY_PARAMS[req.params.country];
   if (!cp) return res.status(400).json({ error: 'Unknown country' });
   try {
-    const r = await tmdbDiscover({ ...cp, ...TYPE_PARAMS.drama, page: 1 });
+    const r = await tmdbDiscover({ ...cp, ...TYPE_PARAMS.drama, page: parseInt(req.query.page) || 1 });
     res.json(r.data.results.slice(0, 20));
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch trending dramas' });

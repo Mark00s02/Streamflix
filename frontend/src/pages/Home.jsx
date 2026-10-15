@@ -8,6 +8,7 @@ import MediaRow from '../components/MediaRow';
 import HeroBanner from '../components/HeroBanner';
 import '../styles/Home.css';
 
+import Icon from '../components/Icon';
 const SORT_OPTIONS = [
   { value: 'popularity.desc', label: 'Most Popular' },
   { value: 'vote_average.desc', label: 'Highest Rated' },
@@ -17,7 +18,6 @@ const SORT_OPTIONS = [
 
 export default function Home() {
   // Hero / rows
-  const [heroMovie, setHeroMovie] = useState(null);
   const [trending, setTrending] = useState([]);
   const [nowPlaying, setNowPlaying] = useState([]);
   const [topRated, setTopRated] = useState([]);
@@ -65,7 +65,6 @@ export default function Home() {
       if (trendRes.status === 'fulfilled') {
         const t = trendRes.value.data;
         setTrending(t);
-        if (t.length > 0) setHeroMovie(t[Math.floor(Math.random() * Math.min(5, t.length))]);
       }
       if (nowRes.status === 'fulfilled') setNowPlaying(nowRes.value.data);
       if (topRes.status === 'fulfilled') setTopRated(topRes.value.data.results || topRes.value.data);
@@ -142,7 +141,7 @@ export default function Home() {
   return (
     <div className="home">
       {/* Hero Banner */}
-      {!rowsLoading && heroMovie && <HeroBanner movie={heroMovie} />}
+      {!rowsLoading && trending.length > 0 && <HeroBanner items={trending} onAddToWatchlist={handleAddToWatchlist} />}
       {rowsLoading && <div className="hero-skeleton" />}
 
       {/* Category Rows */}
@@ -161,18 +160,18 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <MediaRow title="Trending This Week" badge="TRENDING" items={trending} mediaType="movie" />
-          <MediaRow title="Hot Right Now" badge="HOT" items={nowPlaying} mediaType="movie" />
-          <MediaRow title="Top Rated All Time" badge="TOP" items={topRated} mediaType="movie" />
-          <MediaRow title="Trending TV Shows" badge="TV" items={trendingTV} mediaType="tv" />
-          <MediaRow title="Anime" badge="ANIME" items={anime} mediaType="anime" />
+          <MediaRow title="Trending this week" items={trending} mediaType="movie" seeAllTo="/browse/trending-movies" />
+          <MediaRow title="In theaters now" items={nowPlaying} mediaType="movie" seeAllTo="/browse/now-playing" />
+          <MediaRow title="Top rated of all time" items={topRated} mediaType="movie" seeAllTo="/browse/top-rated-movies" />
+          <MediaRow title="Trending series" items={trendingTV} mediaType="tv" seeAllTo="/browse/trending-tv" />
+          <MediaRow title="Popular anime" items={anime} mediaType="anime" seeAllTo="/browse/anime" />
         </>
       )}
 
       {/* Browse Section */}
       <div className="browse-section">
         <div className="browse-header">
-          <h2 className="browse-title">Browse Movies</h2>
+          <h2 className="browse-title">Browse movies</h2>
           <select
             className="sort-select"
             value={sortBy}
@@ -229,14 +228,14 @@ export default function Home() {
             onClick={() => setBrowsePage((p) => Math.max(1, p - 1))}
             disabled={browsePage === 1 || browseLoading}
           >
-            ← Prev
+            <Icon name="left" size={16} /> Previous
           </button>
           <span>Page {browsePage}{browseTotalPages ? ` of ${maxBrowsePage}` : ''}</span>
           <button
             onClick={() => setBrowsePage((p) => Math.min(maxBrowsePage, p + 1))}
             disabled={browsePage >= maxBrowsePage || browseLoading}
           >
-            Next →
+            Next <Icon name="right" size={16} />
           </button>
         </div>
       </div>

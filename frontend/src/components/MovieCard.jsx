@@ -1,75 +1,52 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Icon from './Icon';
 import '../styles/MovieCard.css';
 
-function ScoreBadge({ score }) {
-  if (!score || score === '0.0') return null;
-  const n = parseFloat(score);
-  const cls = n >= 7 ? 'sb-green' : n >= 5 ? 'sb-yellow' : 'sb-red';
-  return (
-    <div className={`score-badge ${cls}`} title={`TMDB Score: ${score}/10`}>
-      <span className="sb-num">{score}</span>
-      <span className="sb-label">TMDB</span>
-    </div>
-  );
+function scoreClass(n) {
+  return n >= 7 ? 'is-high' : n >= 5 ? 'is-mid' : 'is-low';
 }
 
 export default function MovieCard({ movie, onAddToWatchlist, showAddButton = true, mediaType = 'movie' }) {
   const navigate = useNavigate();
 
-  const posterUrl = movie.poster_path
-    ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
-    : null;
-
   const title = movie.title || movie.name || 'Untitled';
   const year = (movie.release_date || movie.first_air_date)?.substring(0, 4);
-  const score = (movie.rating ?? movie.vote_average)?.toFixed(1);
+  const raw = movie.rating ?? movie.vote_average;
+  const score = raw ? Number(raw).toFixed(1) : null;
+  const isSeries = mediaType === 'tv' || mediaType === 'anime';
 
-  const handleWatch = () => {
-    if (mediaType === 'tv' || mediaType === 'anime') {
-      navigate(`/watch/${movie.id}?type=tv`);
-    } else {
-      navigate(`/watch/${movie.id}`);
-    }
-  };
+  const handleWatch = () => navigate(isSeries ? `/watch/${movie.id}?type=tv` : `/watch/${movie.id}`);
 
   return (
-    <div className="movie-card">
-      <div className="movie-poster-wrap" onClick={handleWatch}>
-        {posterUrl ? (
-          <img src={posterUrl} alt={title} className="movie-poster" loading="lazy" />
+    <article className="movie-card">
+      <button className="movie-poster-wrap" onClick={handleWatch} aria-label={`Watch ${title}`}>
+        {movie.poster_path ? (
+          <img src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`} alt="" className="movie-poster" loading="lazy" />
         ) : (
-          <div className="movie-poster-placeholder">
-            <span>No Image</span>
-          </div>
+          <span className="movie-poster-placeholder">{title}</span>
         )}
-        <ScoreBadge score={score} />
-        {mediaType === 'anime' && <span className="card-type-badge anime">ANIME</span>}
-        {mediaType === 'tv' && <span className="card-type-badge tv">TV</span>}
-        <div className="poster-hover-overlay">
-          <span className="watch-icon">▶</span>
-        </div>
-      </div>
+        {score && score !== '0.0' && (
+          <span className={`card-score ${scoreClass(raw)}`}>
+            <Icon name="star" size={11} /> {score}
+          </span>
+        )}
+        {mediaType === 'anime' && <span className="card-type">Anime</span>}
+        {mediaType === 'tv' && <span className="card-type">Series</span>}
+        <span className="poster-play"><Icon name="play" size={22} /></span>
+      </button>
 
       <div className="movie-info">
-        <h3 title={title} onClick={handleWatch} className="movie-title-link">
-          {title}
-        </h3>
-        {year && <p className="year">{year}</p>}
-        {movie.overview && (
-          <p className="overview">
-            {movie.overview.substring(0, 110)}{movie.overview.length > 110 ? '…' : ''}
-          </p>
-        )}
-        <div className="card-actions">
-          <button onClick={handleWatch} className="watch-btn">▶ Watch</button>
-          {showAddButton && (
-            <button onClick={onAddToWatchlist} className="add-btn" title="Add to watchlist">
-              +
+        <h3 className="movie-title-link" title={title} onClick={handleWatch}>{title}</h3>
+        <div className="movie-info-row">
+          {year && <span className="year">{year}</span>}
+          {showAddButton && onAddToWatchlist && (
+            <button onClick={onAddToWatchlist} className="add-btn" aria-label={`Add ${title} to watchlist`} title="Add to watchlist">
+              <Icon name="plus" size={16} />
             </button>
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

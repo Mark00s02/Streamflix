@@ -59,7 +59,7 @@ app.get('/health', (c) => c.json({ status: 'ok' }))
 
 // ── Movies ─────────────────────────────────────────────────────
 app.get('/movies/trending', async (c) => {
-  const data = await tmdb('/trending/movie/week', c.env)
+  const data = await tmdb('/trending/movie/week', c.env, { page: c.req.query('page') || 1 })
   return c.json(data.results)
 })
 
@@ -69,7 +69,7 @@ app.get('/movies/genres', async (c) => {
 })
 
 app.get('/movies/now-playing', async (c) => {
-  const data = await tmdb('/movie/now_playing', c.env, { page: 1 })
+  const data = await tmdb('/movie/now_playing', c.env, { page: c.req.query('page') || 1 })
   return c.json(data.results)
 })
 
@@ -107,7 +107,7 @@ app.get('/movies/:id', async (c) => {
 
 // ── TV ─────────────────────────────────────────────────────────
 app.get('/tv/trending', async (c) => {
-  const data = await tmdb('/trending/tv/week', c.env)
+  const data = await tmdb('/trending/tv/week', c.env, { page: c.req.query('page') || 1 })
   return c.json(data.results)
 })
 
@@ -193,21 +193,21 @@ app.get('/asiandrama/browse', async (c) => {
 app.get('/asiandrama/trending/bl', async (c) => {
   const countryKey = c.req.query('country')
   const extra = countryKey ? (COUNTRY_PARAMS[countryKey] || {}) : {}
-  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...TYPE_PARAMS.bl, page: 1, ...extra })
+  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...TYPE_PARAMS.bl, page: c.req.query('page') || 1, ...extra })
   return c.json(data.results.slice(0, 20))
 })
 
 app.get('/asiandrama/trending/gl', async (c) => {
   const countryKey = c.req.query('country')
   const extra = countryKey ? (COUNTRY_PARAMS[countryKey] || {}) : {}
-  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...TYPE_PARAMS.gl, page: 1, ...extra })
+  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...TYPE_PARAMS.gl, page: c.req.query('page') || 1, ...extra })
   return c.json(data.results.slice(0, 20))
 })
 
 app.get('/asiandrama/trending/:country', async (c) => {
   const cp = COUNTRY_PARAMS[c.req.param('country')]
   if (!cp) return c.json({ error: 'Unknown country' }, 400)
-  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...cp, ...TYPE_PARAMS.drama, page: 1 })
+  const data = await tmdb('/discover/tv', c.env, { sort_by: 'popularity.desc', ...cp, ...TYPE_PARAMS.drama, page: c.req.query('page') || 1 })
   return c.json(data.results.slice(0, 20))
 })
 
